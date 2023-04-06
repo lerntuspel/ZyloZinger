@@ -9,6 +9,14 @@
    categories="System" />
  <parameter name="bonusData"><![CDATA[bonusData 
 {
+   element aud_0
+   {
+      datum _sortIndex
+      {
+         value = "2";
+         type = "int";
+      }
+   }
    element clk_0
    {
       datum _sortIndex
@@ -25,11 +33,19 @@
          type = "int";
       }
    }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
    element vga_ball_0
    {
       datum _sortIndex
       {
-         value = "2";
+         value = "3";
          type = "int";
       }
    }
@@ -47,18 +63,30 @@
  <parameter name="hideFromIPCatalog" value="false" />
  <parameter name="lockedInterfaceDefinition" value="" />
  <parameter name="maxAdditionalLatency" value="1" />
- <parameter name="projectName" value="soc_system.qpf" />
+ <parameter name="projectName" value="" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="0" />
  <parameter name="testBenchDutName" value="" />
  <parameter name="timeStamp" value="0" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
+ <interface name="aud" internal="aud_0.aud" type="conduit" dir="end" />
  <interface name="clk" internal="clk_0.clk_in" type="clock" dir="end" />
+ <interface name="fpga" internal="aud_0.fpga" type="conduit" dir="end" />
+ <interface name="hex0" internal="aud_0.hex0" type="conduit" dir="end" />
+ <interface name="hex1" internal="aud_0.hex1" type="conduit" dir="end" />
+ <interface name="hex2" internal="aud_0.hex2" type="conduit" dir="end" />
+ <interface name="hex3" internal="aud_0.hex3" type="conduit" dir="end" />
+ <interface name="hex4" internal="aud_0.hex4" type="conduit" dir="end" />
+ <interface name="hex5" internal="aud_0.hex5" type="conduit" dir="end" />
  <interface name="hps" internal="hps_0.hps_io" type="conduit" dir="end" />
  <interface name="hps_ddr3" internal="hps_0.memory" type="conduit" dir="end" />
+ <interface name="key" internal="aud_0.key" type="conduit" dir="end" />
  <interface name="reset" internal="clk_0.clk_in_reset" type="reset" dir="end" />
  <interface name="vga" internal="vga_ball_0.vga" type="conduit" dir="end" />
+ <module name="aud_0" kind="aud" version="1.0" enabled="1">
+  <parameter name="readOutSize" value="2048" />
+ </module>
  <module name="clk_0" kind="clock_source" version="21.1" enabled="1">
   <parameter name="clockFrequency" value="50000000" />
   <parameter name="clockFrequencyKnown" value="true" />
@@ -599,12 +627,22 @@
  <connection
    kind="avalon"
    version="21.1"
+   start="hps_0.h2f_axi_master"
+   end="aud_0.avalon_slave_0">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="21.1"
    start="hps_0.h2f_lw_axi_master"
    end="vga_ball_0.avalon_slave_0">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x0000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
+ <connection kind="clock" version="21.1" start="clk_0.clk" end="aud_0.clock" />
  <connection kind="clock" version="21.1" start="clk_0.clk" end="vga_ball_0.clock" />
  <connection
    kind="clock"
@@ -626,6 +664,7 @@
    version="21.1"
    start="clk_0.clk_reset"
    end="vga_ball_0.reset" />
+ <connection kind="reset" version="21.1" start="clk_0.clk_reset" end="aud_0.reset" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
  <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
