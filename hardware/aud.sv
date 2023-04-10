@@ -8,6 +8,9 @@
 `include "global_variables.sv"
 `include "./AudioCodecDrivers/audio_driver.sv"
 
+//`define RAM_ADDR_BITS 5'd16
+//`define RAM_WORDS 16'd48000
+
 // 7-Seg dispaly for debugging
 module hex7seg(input logic  [3:0] a,
 	       output logic [6:0] y);
@@ -35,6 +38,25 @@ module hex7seg(input logic  [3:0] a,
 		endcase
 endmodule
 
+module bram(
+	input logic					clk,
+	input logic 			 	we,                    // Write din to addr
+	input logic [15:0] 	 		addr,         // Address to read/write
+   	input logic [23:0] 		 	din,                   // Data to write
+	output logic [23:0]			dout
+	);
+
+	logic [23:0] 		 mem[47999:0];  // The RAM itself
+  	always_ff @(posedge clk) begin
+      	if (we) begin
+			mem[addr] <= din;
+			dout <= din;
+		end
+		else
+			dout <= mem[addr];
+   	end
+endmodule
+
 module audio_control( 
 		  
 		  input logic [3:0] 	KEY, // Pushbuttons; KEY[0] is rightmost
@@ -55,12 +77,12 @@ module audio_control(
 		  //Driver IO ports
 		  input logic 			clk,
 		  input logic 			reset,
-		  input logic [15:0]	writedata,
+		  input logic [31:0]	writedata,
 		  input logic 			write,
 		  input logic 			read,
 		  input 				chipselect,
 		  input logic [15:0] 	address,
-		  output logic [15:0] 	readdata
+		  output logic [31:0] 	readdata
 		  );
 
 	//Audio Controller
@@ -70,7 +92,7 @@ module audio_control(
 	wire [23:0] adc_right_out;
 	wire advance;
 	reg [23:0] adc_out_buffer = 0;	
-	reg [24:0] counter = 0;  //downsample adance signal
+	logic [15:0] counter = 0;
 	
 	//Device drivers from Altera modified by Professor Scott Hauck and Kyle Gagner in Verilog
 	audio_driver aDriver(
@@ -91,49 +113,116 @@ module audio_control(
 	 	.AUD_DACDAT(AUD_DACDAT)
 	 	);
 
+	logic [23:0] hexout_buffer;
 	//Instantiate hex decoders
-	hex7seg h5( .a(adc_out_buffer[23:20]),.y(HEX5) ), // left digit
-			h4( .a(adc_out_buffer[19:16]),.y(HEX4) ), 
-			h3( .a(adc_out_buffer[15:12]),.y(HEX3) ), 
-			h2( .a(adc_out_buffer[11:8]),.y(HEX2) ),
-			h1( .a(adc_out_buffer[7:4]),.y(HEX1) ),
-			h0( .a(adc_out_buffer[3:0]),.y(HEX0) );	
+	hex7seg h5( .a(hexout_buffer[23:20]),.y(HEX5) ), // left digit
+			h4( .a(hexout_buffer[19:16]),.y(HEX4) ), 
+			h3( .a(hexout_buffer[15:12]),.y(HEX3) ), 
+			h2( .a(hexout_buffer[11:8]),.y(HEX2) ),
+			h1( .a(hexout_buffer[7:4]),.y(HEX1) ),
+			h0( .a(hexout_buffer[3:0]),.y(HEX0) );	
+
+	//Instantiate block ram
+	logic [23:0] buffer;
+	logic ramWrite = 0;
+	logic [15:0] ramAddr = 0;
+	logic [15:0] writeCounter = 0;  //downsample adance signal
+	logic [15:0] readCounter = 0;
+	
+	
+	// reg [23:0] ramOut;
+
+	bram my_bram(
+		.clk(advance),
+		.we(ramWrite),
+		.addr(ramAddr),
+		.din(adc_out_buffer[23:0]),
+		.dout(buffer[23:0])	
+		);
 
 	//Convert stereo input to mono		
 	reg [23:0] audioInMono;
 	always @ (*) begin
-		audioInMono = (adc_right_out/2) + (adc_left_out/2);
+		audioInMono = (adc_right_out>>1) + (adc_left_out>>1);
 	end
 
 	//Determine when the driver is in the middle of pulling a sample
-	logic [7:0] driverReading = 8'd0;
+	logic [31:0] driverReading = 31'd0;
+	logic done = 0;
+	logic start = 0;
+	logic [15:0] limit = 0;
+
 	always @(posedge clk) begin
+		// ramRead <= read;
+		// pulse ram write signal for 1 clk cycle
 		if (chipselect && write) begin
-			driverReading <= writedata;
+			case (address)
+				3'h6 : begin
+					// initiate storage of audio samples into bram
+					limit <= writedata[15:0];
+					start <= 1;
+					done <= 0;
+				end
+			endcase
 		end	
-		if (chipselect && read) begin
-			if (address == 5) begin 
-				readdata <= audioInMono[23:8];
+		if (chipselect && read && !start) begin
+			case (address)
+				3'h5 : begin
+					if (done) begin
+						ramAddr <= readCounter;
+						readCounter <= readCounter + 1;
+					end
+					// pads for 2s compliment int
+					if (buffer[23] == 1) begin 
+						readdata[23:0] <= buffer[23:0];
+						readdata[31:24] <= 8'b11111111;
+					end
+					else if (buffer[23] == 0) begin
+						readdata[23:0] <= buffer[23:0];
+						readdata[31:24] <= 8'b00000000;
+					end
+				end
+			endcase
+		end
+
+		// On advance (new audio sample avalable)
+		if (advance) begin
+			adc_out_buffer <= audioInMono;
+			// runs only if still in memory writing stage
+			if (start && !write && !read) begin
+				// if ram address limit was reached in the last clock cycle
+				// the writing process is done
+				// and reading may being 
+				if (ramAddr == limit) begin 
+					done <= 1;
+					start <= 0;
+				end
+				else if (!done) begin
+					// if ram still needs writing, then write
+					ramWrite <= 1;
+					ramAddr <= writeCounter;
+					writeCounter <= writeCounter + 1;
+				end
 			end
+			// Hex display control
+			if (counter[15]) begin
+				hexout_buffer <= audioInMono;
+			end
+			counter <= counter + 1;
+		end
+		else if (ramWrite) begin
+			ramWrite <= 0;
 		end
 	end
-	
+
+		
 	wire sampleBeingTaken;
 	assign sampleBeingTaken = driverReading[0];
 	
 	//Map timer(Sample) counter output
 	parameter readOutSize = 2048;
-
 	//Sample inputs/Audio passthrough
-	always @(posedge advance) begin
-		counter <= counter + 1;
-		dac_left_in <= adc_left_out;
-		dac_right_in <= adc_right_out;
-	end
-	
-	always @(posedge counter[13]) begin
-		adc_out_buffer <= audioInMono;
-	end
+
 endmodule
 
 
