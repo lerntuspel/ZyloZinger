@@ -5,18 +5,18 @@
  * Storage procedure
 
 normal: read from source, ram write/read disabled
-    start = 0
-    ram_e = 0
+    write_enable = 0
+    ram_enable = 0
 store into bram sequencially: write enabled read enabled
-    start = 1
-    ram_e = 1
+    write_enable = 1
+    ram_enable = 1
 read from bram sequencially: write disabled read enabled 
 as read commands come in
-    start = 0
-    ram_e = 1
+    write_enable = 0
+    ram_enable = 1
 return to normal
-    start = 0
-    ram_e = 0
+    write_enable = 0
+    ram_enable = 0
 
  * Columbia University
  */
@@ -54,62 +54,39 @@ module hex7seg(input logic  [3:0] a,
         endcase
 endmodule
 
-module bram
-    #(
-        parameter                           RAM_WIDTH = 24,
-        parameter                           RAM_ADDR_BITS = 11,
-        parameter                           RAM_WORDS = 2048
-    )(
-    input logic                             clk,
-    input logic                             write_enable,          // Write din to addr
-    input logic                             ram_enable,            // choose between din and mem[addr]
-    input logic [RAM_ADDR_BITS-1:0]         addr,                  // Address to read/write
-    input logic [RAM_WIDTH-1:0]             din,                   // Data to write
-    output logic [RAM_WIDTH-1:0]            dout
-    );
-
-    logic [RAM_WIDTH-1:0]                   mem[RAM_WORDS-1:0];  // The RAM itself
-
-    always_ff @(posedge clk) begin
-        if (ram_enable) begin
-            if (write_enable) begin
-                mem[addr] <= din;
-            end
-            dout <= mem[addr];
-        end
-        else begin
-            dout <= din;
-        end   
-    end
-endmodule
-
 module audio_control( 
-          
-          input logic [3:0]         KEY, // Pushbuttons; KEY[0] is rightmost
-          // 7-segment LED displays; HEX0 is rightmost
-          output logic [6:0]        HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, 
-          
-          //Audio pin assignments
-          //Used because Professor Scott Hauck and Kyle Gagner
-          output logic              FPGA_I2C_SCLK,
-          inout                     FPGA_I2C_SDAT,
-          output logic              AUD_XCK,
-          input logic               AUD_ADCLRCK,
-          input logic               AUD_DACLRCK,
-          input logic               AUD_BCLK,
-          input logic               AUD_ADCDAT,
-          output logic              AUD_DACDAT,
-          
-          //Driver IO ports
-          input logic               clk,
-          input logic               reset,
-          input logic [31:0]        writedata,
-          input logic               write,
-          input logic               read,
-          input                     chipselect,
-          input logic [15:0]        address,
-          output logic [31:0]       readdata         
-          );
+        input logic [3:0]         KEY, // Pushbuttons; KEY[0] is rightmost
+        // 7-segment LED displays; HEX0 is rightmost
+        output logic [6:0]        HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, 
+        
+        //Audio pin assignments
+        //Used because Professor Scott Hauck and Kyle Gagner
+        output logic              FPGA_I2C_SCLK,
+        inout                     FPGA_I2C_SDAT,
+        output logic              AUD_XCK,
+        input logic               AUD_ADCLRCK,
+        input logic               AUD_DACLRCK,
+        input logic               AUD_BCLK,
+        input logic               AUD_ADCDAT,
+        output logic              AUD_DACDAT,
+        
+        //Driver IO ports
+        input logic               clk,
+        input logic               reset,
+        input logic [31:0]        writedata,
+        input logic               write,
+        input logic               read,
+        input                     chipselect,
+        input logic [15:0]        address,
+        output logic [31:0]       readdata,     
+
+        //Bram controls
+        output logic [15:0]       bram_wa,
+        output logic [15:0]       bram_ra,
+        output logic              bram_write = 0,
+        output logic [23:0]       bram_data_in,
+        input logic [23:0]        bram_data_out
+        );
 
     //Audio Controller
     reg [23:0]      dac_left_in;
@@ -122,39 +99,23 @@ module audio_control(
     audio_driver aDriver(
         .CLOCK_50(clk), 
         .reset(reset), 
-         .dac_left(dac_left_in), 
-         .dac_right(dac_right_in), 
-         .adc_left(adc_left_out), 
-         .adc_right(adc_right_out), 
-         .advance(advance), 
-         .FPGA_I2C_SCLK(FPGA_I2C_SCLK), 
-         .FPGA_I2C_SDAT(FPGA_I2C_SDAT), 
-         .AUD_XCK(AUD_XCK), 
-         .AUD_DACLRCK(AUD_DACLRCK), 
-         .AUD_ADCLRCK(AUD_ADCLRCK), 
-         .AUD_BCLK(AUD_BCLK), 
-         .AUD_ADCDAT(AUD_ADCDAT), 
-         .AUD_DACDAT(AUD_DACDAT)
-         );
-
-    //Instantiate block ram
-    logic [23:0]    adc_out_buffer;
-    logic [23:0]    buffer;
-    logic [15:0]    ramAddr;
-    logic           ram_e = 0;
-    logic           start = 0;
-
-    bram my_bram(
-        .clk(clk),
-        .write_enable(start),
-        .ram_enable(ram_e),
-        .addr(ramAddr),
-        .din(adc_out_buffer[23:0]),
-        .dout(buffer[23:0])    
+        .dac_left(dac_left_in), 
+        .dac_right(dac_right_in), 
+        .adc_left(adc_left_out), 
+        .adc_right(adc_right_out), 
+        .advance(advance), 
+        .FPGA_I2C_SCLK(FPGA_I2C_SCLK), 
+        .FPGA_I2C_SDAT(FPGA_I2C_SDAT), 
+        .AUD_XCK(AUD_XCK), 
+        .AUD_DACLRCK(AUD_DACLRCK), 
+        .AUD_ADCLRCK(AUD_ADCLRCK), 
+        .AUD_BCLK(AUD_BCLK), 
+        .AUD_ADCDAT(AUD_ADCDAT), 
+        .AUD_DACDAT(AUD_DACDAT)
         );
 
     //Instantiate hex decoders
-    logic [23:0] hexout_buffer;
+    logic [23:0]    hexout_buffer;
     hex7seg h5( .a(hexout_buffer[23:20]),.y(HEX5) ), // left digit
             h4( .a(hexout_buffer[19:16]),.y(HEX4) ), 
             h3( .a(hexout_buffer[15:12]),.y(HEX3) ), 
@@ -165,29 +126,40 @@ module audio_control(
     //Convert stereo input to mono        
     logic [23:0]    audioInMono;
     logic [15:0]    counter = 16'd0;
+    wire [23:0]     buffer;
+
+
 
     always @ (*) begin
         audioInMono = (adc_right_out>>1) + (adc_left_out>>1);
+        // buffer changes based on ram on or off
+        buffer = bram_data_out;
+        bram_data_in = adc_out_buffer;
     end
 
     //Determine when the driver is in the middle of pulling a sample
+    logic           bram_writing = 0;
     logic [31:0]    driverReading = 31'd0;
     logic [15:0]    limit;
-    logic [15:0]    writeCounter =  16'd0;
-    logic [15:0]    readCounter =   16'd0;
-
+    logic [23:0]    adc_out_buffer;
     always @(posedge clk) begin
         // iowrite recieved
         if (chipselect && write) begin
             case (address)
                 3'h6 : begin
                     // initiate storage of audio samples into bram
-                    // enable ram and ram write
-                    limit <= writedata[15:0];
-                    start <= 1;
-                    ram_e <= 1;
-                    ramAddr <= writeCounter;
-                    writeCounter <= writeCounter + 1;
+                    // reset bram_wa to 0
+                    // writing is the continuous signal that tells 
+                    // aud_control that bram is in use
+                    if (!bram_writing) begin
+                        limit <= writedata[15:0];
+                        bram_writing <= 1;
+                        bram_wa <= -1;
+                    end
+                end
+                3'h7 : begin
+                    // choose bram read address
+                    bram_ra <= writedata[15:0];
                 end
             endcase
         end   
@@ -195,23 +167,7 @@ module audio_control(
         if (chipselect && read) begin
             case (address)
                 3'h5 : begin
-                    // incirments read ramAddr if done writing to ram on a read command
-                    if (ram_e && !start) begin
-                        if (readCounter == limit) begin 
-                            ram_e <= 0;
-                            readCounter <= 0;
-                            writeCounter <= 0;
-                        end 
-                        else begin
-                            ramAddr <= readCounter;
-                            readCounter <= readCounter + 1;
-                        end
-                    end
-                    // Always if read signal will output the current buffer
-                    // Which is the current result of bram
-                    //    if ram_e = 1   dout = current bram[addr] 
-                    //    if ram_e = 0   dout = din 
-                    // pads for 2s compliment int
+                    // return padded buffer
                     if (buffer[23] == 1) begin 
                         readdata[23:0] <= buffer[23:0];
                         readdata[31:24] <= 8'b11111111;
@@ -224,31 +180,31 @@ module audio_control(
             endcase
         end
         // On advance (new audio sample avalable)
+        // bram_write signal pulse
+        if (bram_write) bram_write <= 0;
+        // this clock cycle writes the previous clock cycles 
+        // adc_out_buffer into the current bram_wa
+        
         if (advance) begin
-            // bram is on main clk
-            // according to bram, write enable is toggled on forever
-            // every clock set adc_out_buffer to current audioInMono
-            adc_out_buffer <= audioInMono;
-            // runs only if still in memory writing stage
-            // does not happen if current reciving a ioread/write
-            if (start && ram_e && !write && !read) begin
-                // check if limit number of samples has been reached
-                if (writeCounter == limit) begin 
-                    start <= 0;
-                    ramAddr <= readCounter;
-                    readCounter <= readCounter + 1;
-                end
-                // otherwise incirment the address
-                else begin
-                    ramAddr <= writeCounter;
-                    writeCounter <= writeCounter + 1;
-                end
-            end
-            // Hex display control
-            if (counter[14]) begin
+            // HEX display
+            if (counter[13:0] == 0) begin
                 hexout_buffer <= audioInMono;
             end
             counter <= counter + 1;
+
+            adc_out_buffer <= audioInMono;  
+            // behavior during write bram procedure
+            if (bram_writing && !bram_write) begin
+                // check if limit number of samples has been reached
+                if (bram_wa == limit) begin 
+                    bram_writing <= 0;
+                end
+                // otherwise set bram write and incirment the address
+                else begin
+                    bram_write <= 1;
+                    bram_wa <= bram_wa + 1;
+                end
+            end
         end
     end
 
@@ -256,7 +212,7 @@ module audio_control(
     assign sampleBeingTaken = driverReading[0];
     
     //Map timer(Sample) counter output
-    parameter readOutSize = 2048;
+    parameter readOutSize = 16'hffff;
     //Sample inputs/Audio passthrough
 
 endmodule

@@ -13,7 +13,7 @@
    {
       datum _sortIndex
       {
-         value = "3";
+         value = "4";
          type = "int";
       }
    }
@@ -31,6 +31,14 @@
       {
          value = "";
          type = "String";
+      }
+   }
+   element bram_0
+   {
+      datum _sortIndex
+      {
+         value = "3";
+         type = "int";
       }
    }
    element clk_0
@@ -89,6 +97,62 @@
          type = "String";
       }
    }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
    element vga_ball_0
    {
       datum _sortIndex
@@ -99,6 +163,11 @@
    }
    element vga_ball_0.avalon_slave_0
    {
+      datum _lockedAddress
+      {
+         value = "0";
+         type = "boolean";
+      }
       datum baseAddress
       {
          value = "0";
@@ -141,7 +210,12 @@
  <interface name="reset" internal="clk_0.clk_in_reset" type="reset" dir="end" />
  <interface name="vga" internal="vga_ball_0.vga" type="conduit" dir="end" />
  <module name="aud_0" kind="aud" version="1.0" enabled="1">
-  <parameter name="readOutSize" value="2048" />
+  <parameter name="readOutSize" value="65535" />
+ </module>
+ <module name="bram_0" kind="bram" version="1.0" enabled="1">
+  <parameter name="RAM_ADDR_BITS" value="16" />
+  <parameter name="RAM_WIDTH" value="24" />
+  <parameter name="RAM_WORDS" value="65535" />
  </module>
  <module name="clk_0" kind="clock_source" version="21.1" enabled="1">
   <parameter name="clockFrequency" value="50000000" />
@@ -683,7 +757,7 @@
  <connection
    kind="avalon"
    version="21.1"
-   start="hps_0.h2f_axi_master"
+   start="hps_0.h2f_lw_axi_master"
    end="vga_ball_0.avalon_slave_0">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x0000" />
@@ -692,13 +766,14 @@
  <connection
    kind="avalon"
    version="21.1"
-   start="hps_0.h2f_axi_master"
+   start="hps_0.h2f_lw_axi_master"
    end="aud_0.avalon_slave_0">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x00040000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection kind="clock" version="21.1" start="clk_0.clk" end="vga_ball_0.clock" />
+ <connection kind="clock" version="21.1" start="clk_0.clk" end="bram_0.clock" />
  <connection kind="clock" version="21.1" start="clk_0.clk" end="aud_0.clock" />
  <connection
    kind="clock"
@@ -715,6 +790,17 @@
    version="21.1"
    start="clk_0.clk"
    end="hps_0.h2f_lw_axi_clock" />
+ <connection
+   kind="conduit"
+   version="21.1"
+   start="bram_0.bram"
+   end="aud_0.bram_control">
+  <parameter name="endPort" value="" />
+  <parameter name="endPortLSB" value="0" />
+  <parameter name="startPort" value="" />
+  <parameter name="startPortLSB" value="0" />
+  <parameter name="width" value="0" />
+ </connection>
  <connection
    kind="reset"
    version="21.1"

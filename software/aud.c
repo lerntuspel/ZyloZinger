@@ -43,6 +43,7 @@
 //#define CORDS_Y(x) ((x)+16)
 #define AUD_AMP(x) ((x)+20)
 #define MEM_LMT(x) ((x)+24)
+#define MEM_ADDR(x) ((x)+28)
 
 /*
  * Information about our device
@@ -50,24 +51,34 @@
 struct aud_dev {
 	struct resource res; /* Resource: our registers */
 	void __iomem *virtbase; /* Where registers can be accessed in memory */
-	aud_amp_t audio;
-	aud_amp_t limit;
+	aud_mem_t memory;
 } dev;
 
 /*
  * Write segments of a single digit
  * Assumes digit is in range and the device information has been set up
  */
-static void read_audio(aud_amp_t *audio)
-{
-	audio->amplitude = ioread32(AUD_AMP(dev.virtbase));
+// static void read_audio(aud_amp_t *audio)
+// {
+// 	audio->amplitude = ioread32(AUD_AMP(dev.virtbase));
 	// dev.audio = *audio;
+// }
+
+static void write_address(aud_mem_t *memory)
+{
+	iowrite32(memory->address, MEM_ADDR(dev.virtbase));
+	dev.memory = *memory;
 }
 
-static void write_limit(aud_amp_t *limit)
+static void write_limit(aud_mem_t *memory)
 {
-	iowrite32(limit->amplitude, MEM_LMT(dev.virtbase));
-	dev.limit = *limit;
+	iowrite32(memory->size, MEM_LMT(dev.virtbase));
+	dev.memory = *memory;
+}
+
+static void read_memory(aud_mem_t *memory)
+{
+	memory->data = ioread32(AUD_AMP(dev.virtbase));
 }
 	// dev.audio = *audio;
 /*
@@ -79,16 +90,20 @@ static long aud_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
 	aud_arg_t vla;
 	switch (cmd) {
-		case AUD_READ_AMPLITUDE:
-			read_audio(&vla.audio);
-			// vla.audio = dev.audio;
+		case AUD_READ_DATA:
+			read_memory(&vla.memory);
 			if (copy_to_user((aud_arg_t *) arg, &vla, sizeof(aud_arg_t)))
 				return -EACCES;
-			break;
+			break;	
 		case AUD_WRITE_LIMIT:
 			if (copy_from_user(&vla, (aud_arg_t *) arg, sizeof(aud_arg_t)))
 				return -EACCES;
-			write_limit(&vla.mem_limit);	
+			write_limit(&vla.memory);	
+			break;
+		case AUD_WRITE_ADDRESS:
+			if (copy_from_user(&vla, (aud_arg_t *) arg, sizeof(aud_arg_t)))
+				return -EACCES;
+			write_address(&vla.memory);
 			break;
 		default:
 			return -EINVAL;

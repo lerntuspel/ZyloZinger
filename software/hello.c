@@ -66,15 +66,34 @@ void send_cords(const vga_ball_cords_t *c)
 	}
 }
 
-void send_limit(const aud_amp_t *c) {
+void send_limit(const aud_mem_t *c) {
 	aud_arg_t amt;
-	amt.mem_limit = *c;
+	amt.memory = *c;
 	if (ioctl(aud_fd, AUD_WRITE_LIMIT, &amt)) {
 		perror("ioctl(AUD_WRITE_LIMIT) failed");
 		return;
 	}
 }
 
+void send_address(const aud_mem_t *c) {
+	aud_arg_t aat;
+	aat.memory = *c;
+	if (ioctl(aud_fd, AUD_WRITE_ADDRESS, &aat)) {
+		perror("ioctl(AUD_WRITE_ADDRESS) failed");
+		return;
+	}
+}
+
+int get_data() {
+	aud_arg_t aat;
+	if (ioctl(aud_fd, AUD_READ_DATA, &aat)) {
+		perror("ioctl(AUD_READ_DATA) failed");
+		return 0;
+	}
+	return aat.memory.data;
+}
+
+/*
 int get_amplitude() {
 	aud_arg_t vlc;
 	if (ioctl(aud_fd, AUD_READ_AMPLITUDE, &vlc)) {
@@ -82,7 +101,7 @@ int get_amplitude() {
 		return 0;
 	}
 	return vlc.audio.amplitude;
-}
+}*/
 
 void updateBall(ball *obj) {
 	obj->x += obj->dx;
@@ -93,7 +112,6 @@ void updateBall(ball *obj) {
 
 	if (obj->y < 1 || obj->y >= Y_MAX)
 		obj->dy = -obj->dy;
-
 }
 
 int main()
@@ -101,11 +119,13 @@ int main()
 	vga_ball_arg_t vla;
 	vga_ball_cords_t vbc;
 	
-	aud_amp_t alimit;
+	aud_arg_t aat;
+	aud_mem_t amt;
 
 	int i;
-	ball ball_obj = {.x = 639, .y = 239, .dx = 0, .dy = 0};
-	mem mem_obj = {.limit = 2048};
+	ball ball_obj = {.x = 639, .y = 299, .dx = 0, .dy = 0};
+	mem mem_obj = {.data = 0, .address = 0, .limit = 48000};
+
 	static const char filename1[] = "/dev/vga_ball";
 	static const char filename2[] = "/dev/aud";
 
@@ -124,24 +144,35 @@ int main()
  	FILE *fp = fopen("test.txt", "w");
 	if (fp == NULL)	return -1;
 
-	vbc.x = (unsigned char) ball_obj.x;
-	vbc.y = (unsigned char) ball_obj.y;
+	vbc.x = ball_obj.x;
+	vbc.y = ball_obj.y;
 	send_cords(&vbc);
-	alimit.amplitude = (int) mem_obj.limit;
-	send_limit(&alimit);
+
+	amt.size = (int) mem_obj.limit;
+	
+	usleep(1200000);
+	send_limit(&amt);
 	usleep(1200000);
 	int amp = 0;
-	
-	//int counter = 0;
 
-	// Initiate memory reading
+	for(int counter = 0; counter < amt.size; counter++) {
+		
+		mem_obj.address = counter;
+		amt.address = mem_obj.address;
+		//printf("%d: ", amt.address);
 
-	for(int counter = 0; counter < alimit.amplitude; counter++) {	
-		amp = get_amplitude();
-		fprintf(fp, "%d: %08x\n", counter, amp);
-		printf("%08x\n", amp);
-		usleep(10);
-		send_cords(&vbc);
+		send_address(&amt);	
+
+		amt.data = get_data();
+		amp = amt.data;
+		//printf("%d\n", amt.data);
+		fprintf(fp, "%08x\n", amp);
+		
+		// amp = (amp >> 8) + 239;
+		// printf("%d\n", amp);
+		// vbc.y = (int) amp;
+		
+		// send_cords(&vbc);
 	}
 	fclose(fp);
 	
