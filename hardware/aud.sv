@@ -133,12 +133,16 @@ module audio_control(
     always @ (*) begin
         audioInMono = (adc_right_out>>1) + (adc_left_out>>1);
         // buffer changes based on ram on or off
-        buffer = bram_data_out;
         bram_data_in = adc_out_buffer;
+        if (bram_reading)
+            buffer = bram_data_out;
+        else
+            burffer = adc_out_buffer;
     end
 
     //Determine when the driver is in the middle of pulling a sample
     logic           bram_writing = 0;
+    logic           bram_reading = 0;
     logic [31:0]    driverReading = 31'd0;
     logic [15:0]    limit;
     logic [23:0]    adc_out_buffer;
@@ -154,6 +158,10 @@ module audio_control(
                     if (!bram_writing) begin
                         limit <= writedata[15:0];
                         bram_writing <= 1;
+                        if (writedata[15:0] == 16'h0000)                            
+                            bram_reading <= 0;
+                        else 
+                            bram_reading <= 1;
                         bram_wa <= -1;
                     end
                 end
