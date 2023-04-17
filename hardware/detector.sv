@@ -7,16 +7,17 @@ module detector(
 
 input clk,
 input reset,
-input advance,
+input advance1, advance2, advance3, advance4,
 input logic signed [63:0] power_1,
 input logic signed [63:0] power_2,
 input logic signed [63:0] power_3,
 input logic signed [63:0] power_4,
 output logic [2:0] result, //00 for silence, 1-4 for powers 1-4 respectively
-output logic [2:0] overall_result
+output logic [2:0] overall_result,
+output logic flag
 
 );
-    logic flag;
+    // logic flag;
 
     logic ratio_12;
     logic ratio_13;
@@ -44,8 +45,9 @@ output logic [2:0] overall_result
     logic pw3_count_greatest;
     logic pw4_count_greatest;
     logic silence_count_greatest;
-
-
+    
+    logic advance;
+	
 always @(posedge clk) begin
 
     flag <= advance;
@@ -67,7 +69,7 @@ always @(posedge clk) begin
     end
 
     if(flag)begin
-
+        
         case(result) 
             3'b00: silence_count <= silence_count + 1;
             3'b01: pw1_count <= pw1_count + 1;
@@ -119,5 +121,6 @@ end
     assign pw3_count_greatest = (pw3_count >= pw1_count) && (pw3_count >= pw2_count) && (pw3_count >= pw4_count) && (pw1_count >= silence_count);
     assign pw4_count_greatest = (pw4_count >= pw1_count) && (pw4_count >= pw2_count) && (pw4_count >= pw3_count) && (pw1_count >= silence_count);
     assign silence_count_greatest = (silence_count >= pw1_count) && (silence_count >= pw2_count) && (silence_count >= pw3_count) && (silence_count >= pw4_count);
+    assign advance = (advance1||advance2||advance3||advance4);
 
 endmodule

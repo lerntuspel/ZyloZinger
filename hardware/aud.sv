@@ -85,7 +85,16 @@ module audio_control(
         output logic [15:0]       bram_ra,
         output logic              bram_write = 0,
         output logic [23:0]       bram_data_in,
-        input logic [23:0]        bram_data_out
+        input logic [23:0]        bram_data_out,
+        
+        //goertzel control
+        output logic [23:0]       adc_out_buffer,
+        output logic              advance,
+        
+        //detector return
+        input logic [2:0]         result,
+        input logic [2:0]         overall_result,
+        input logic               flag
         );
 
     //Audio Controller
@@ -93,7 +102,7 @@ module audio_control(
     reg [23:0]      dac_right_in;
     wire [23:0]     adc_left_out;
     wire [23:0]     adc_right_out;
-    wire advance;
+    // wire advance;
     
     //Device drivers from Altera modified by Professor Scott Hauck and Kyle Gagner in Verilog
     audio_driver aDriver(
@@ -127,17 +136,28 @@ module audio_control(
     logic [23:0]    audioInMono;
     logic [15:0]    counter = 16'd0;
     wire [23:0]     buffer;
-
-
+    
+    logic [2:0]     bram_input_ctrl;
+    logic [2:0]     result_buffer;
+    logic           write_clk;
 
     always @ (*) begin
         audioInMono = (adc_right_out>>1) + (adc_left_out>>1);
         // buffer changes based on ram on or off
-        bram_data_in = adc_out_buffer;
+        case (bram_input_ctrl) 
+            3'd0 : begin
+                bram_data_in = adc_out_buffer;
+                write_clk = advance;
+            end
+            3'd1 : begin
+                bram_data_in = {21'b0, result_buffer};   
+                write_clk = flag;
+            end  
+        endcase
         if (bram_reading)
             buffer = bram_data_out;
         else
-            burffer = adc_out_buffer;
+            buffer = adc_out_buffer;
     end
 
     //Determine when the driver is in the middle of pulling a sample
@@ -145,12 +165,12 @@ module audio_control(
     logic           bram_reading = 0;
     logic [31:0]    driverReading = 31'd0;
     logic [15:0]    limit;
-    logic [23:0]    adc_out_buffer;
+    // logic [23:0]    adc_out_buffer;
     always @(posedge clk) begin
         // iowrite recieved
         if (chipselect && write) begin
             case (address)
-                3'h6 : begin
+                16'h0006 : begin
                     // initiate storage of audio samples into bram
                     // reset bram_wa to 0
                     // writing is the continuous signal that tells 
@@ -165,16 +185,19 @@ module audio_control(
                         bram_wa <= -1;
                     end
                 end
-                3'h7 : begin
+                16'h0007 : begin
                     // choose bram read address
                     bram_ra <= writedata[15:0];
+                end
+                16'h0008 : begin
+                    bram_input_ctrl[2:0] <= writedata[2:0];
                 end
             endcase
         end   
         // ioread recieved
         if (chipselect && read) begin
             case (address)
-                3'h5 : begin
+                16'h0005 : begin
                     // return padded buffer
                     if (buffer[23] == 1) begin 
                         readdata[23:0] <= buffer[23:0];
@@ -192,15 +215,9 @@ module audio_control(
         if (bram_write) bram_write <= 0;
         // this clock cycle writes the previous clock cycles 
         // adc_out_buffer into the current bram_wa
-        
-        if (advance) begin
-            // HEX display
-            if (counter[13:0] == 0) begin
-                hexout_buffer <= audioInMono;
-            end
-            counter <= counter + 1;
-
+        if (write_clk) begin
             adc_out_buffer <= audioInMono;  
+            result_buffer <= result;
             // behavior during write bram procedure
             if (bram_writing && !bram_write) begin
                 // check if limit number of samples has been reached
@@ -213,6 +230,13 @@ module audio_control(
                     bram_wa <= bram_wa + 1;
                 end
             end
+        end
+        if (advance) begin
+        // HEX display
+            if (counter[13:0] == 0) begin
+                hexout_buffer <= audioInMono;
+            end
+            counter <= counter + 1;
         end
     end
 

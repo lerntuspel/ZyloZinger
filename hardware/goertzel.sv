@@ -2,12 +2,16 @@
 `define FFT_MAG 1024
 `define NORMALIZE 8388608 //2^23, dependent on width of incoming signal
 
-module goertzel(
-
+module goertzel
+#(
+	parameter [31:0] bin_coeff = 32'd0000
+)
+(
     input clk,
     input reset,
+    input advance_in,
     input logic signed [23:0] input_sig,
-    input logic signed [31:0] bin_coeff,
+    // input logic signed [31:0] bin_coeff,
     output logic signed [63:0] power,
     output logic advance
 );
@@ -25,7 +29,7 @@ logic padding_flag = 0;
 logic [`FFT_WIDTH-1:0] signal_counter = 0;
 
 always_ff @ (posedge clk) begin
-
+    if (advance_in) begin
     if (input_sig < 0)
         input_sig_64 <= {40'b1111111111111111111111111111111111111111, input_sig};
     else
@@ -47,7 +51,31 @@ always_ff @ (posedge clk) begin
         signal_counter = signal_counter + 1;
     end
 end
+end
 
 assign bin_coeff_64 = {32'b0, bin_coeff};
+
+endmodule
+
+module goertzel_split (
+    input clk,
+    input reset,
+    input advance_in,
+	input wire signed [23:0] input_sig,
+	output wire signed [23:0] output_sig1, output_sig2, output_sig3, output_sig4,
+	output logic advance1, advance2, advance3, advance4
+);
+     always @ (*) begin
+        advance1 = advance_in;
+	    advance2 = advance_in;
+	    advance3 = advance_in;
+	    advance4 = advance_in;
+        output_sig1 = input_sig;
+	    output_sig2 = input_sig;
+	    output_sig3 = input_sig;
+	    output_sig4 = input_sig;
+    end
+    
+
 
 endmodule
