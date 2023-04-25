@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #define X_MAX 640 
 #define Y_MAX 480
@@ -92,6 +93,34 @@ void updateBall(ball *obj) {
 		obj->dy = -obj->dy;
 }
 
+
+//get received note from audio, see which of four notes it is
+//get a string in return which we compare with what we get from song.txt
+//not sure what parameter to give and how to go about converting audio sample to note_id.
+char* audio_received() {
+    	//example
+    	char *note_string = malloc(6);
+    	strcopy(note_string,"0001");
+
+    	return note_string;
+}
+
+//compare received note with the actual note required
+int compare_note(char* actual_note, char* received_note) {
+    	int note_same;
+    	int i;
+    	for (i = 0; i < sizeof(actual_note); i++) {
+        	if (actual_note[i] != received_note[i]) {
+            		note_same = 0;
+            		break;
+        	} else {
+            		note_same = 1;
+        	}
+    	}
+    	return note_same;
+}
+
+
 int main()
 {
 	vga_zylo_arg_t vzat;
@@ -165,6 +194,44 @@ int main()
 	// 		fprintf(fp, "%08x\n", amp);
 	// }
 	// fclose(fp);
+	
+	
+	/*very simple game logic to compare notes. Will need changes for audio_received function and rate of testing especially*/
+	score = 0;
+    	combo = 0;
+	
+	//read song.txt line by line to get the notes that should be played.
+    	FILE *textfile;
+    	char line[6];
+    	char *incoming_note;
+
+   	textfile = fopen("song.txt","r");
+	if (textfile == NULL) return -1;
+
+    	//need to change rate at which we test
+    	while (fgets(line, sizeof(line), textfile)) {
+        	line[strcspn(line,"\n")] = '\0';
+
+        	//see what the incoming note is, convert it to a string
+        	incoming_note = audio_received(); //see what parameter to give
+		
+		//compare incoming note with expected note
+        	same_note = compare_note(line,incoming_note);
+        
+       		if (same_note == 1) {
+            		combo += 1;
+            		score += 10 + (5*combo);
+            		//change sprite color to show correct note played?
+        	} else {
+            		combo = 0;
+            		//change sprite color to show wrong note played?
+        	}
+        	free(incoming_note);
+
+        	//how to change rate at which we compare notes?
+		//can we use usleep to delay the loop?
+    	}
+	
 	
 	printf("VGA BALL Userspace program terminating\n");
 	return 0;
