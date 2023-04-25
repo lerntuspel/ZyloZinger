@@ -32,7 +32,7 @@ set_module_property ALLOW_GREYBOX_GENERATION false
 set_module_property REPORT_HIERARCHY false
 set_module_assignment embeddedsw.dts.vendor "csee4840"
 set_module_assignment embeddedsw.dts.name "goertzel_split"
-set_module_assignment embeddedsw.dts.group "aud"
+set_module_assignment embeddedsw.dts.group "goertzel_split"
 
 # 
 # file sets

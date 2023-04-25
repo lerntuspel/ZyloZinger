@@ -1,7 +1,7 @@
 ifneq (${KERNELRELEASE},)
 
 # KERNELRELEASE defined: we are being compiled as part of the Kernel
-        obj-m := vga_ball.o aud.o
+        obj-m := vga_zylo.o aud.o
 
 else
 
@@ -19,7 +19,7 @@ clean:
 	${MAKE} -C ${KERNEL_SOURCE} SUBDIRS=${PWD} clean
 	${RM} hello
 
-TARFILES = Makefile README vga_ball.h vga_ball.c hello.c aud.c aud.h
+TARFILES = Makefile README vga_zylo.h vga_zylo.c hello.c aud.c aud.h
 TARFILE = lab3-sw.tar.gz
 .PHONY : tar
 tar : $(TARFILE)

@@ -1,14 +1,14 @@
 /*
- * Userspace program that communicates with the aud and vga_ball device driver
+ * Userspace program that communicates with the aud and vga_vylo device driver
  * through ioctls
- * current amplitude will be represented as the y position of the ball from vga_ball
+ * current amplitude will be represented as the y position of the ball from vga_vylo
  * reads audio and then sends amplituded
  * ayu2126
  * Columbia University
  */
 
 #include <stdio.h>
-#include "vga_ball.h"
+#include "vga_zylo.h"
 #include "aud.h"
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -17,54 +17,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#define X_MAX 78 
-#define Y_MAX 58
+#define X_MAX 640 
+#define Y_MAX 480
 
-int vga_ball_fd;
+int vga_zylo_fd;
 int aud_fd;
-
-/* Read and print the background color */
-void print_background_color() {
-	vga_ball_arg_t vla;
-
-	if (ioctl(vga_ball_fd, VGA_BALL_READ_BACKGROUND, &vla)) {
-		perror("ioctl(VGA_BALL_READ_BACKGROUND) failed");
-		return;
-	}
-	printf("%02x %02x %02x\n",
-			vla.background.red, vla.background.green, vla.background.blue);
-}
-
-void print_cords() {
-	vga_ball_cords_arg_t vbc;
-
-	if (ioctl(vga_ball_fd, VGA_BALL_READ_CORDS, &vbc)) {
-		perror("ioctl(VGA_BALL_READ_CORDS) failed");
-		return;
-	}
-	printf("%02x_%02x\n", vbc.cords.x, vbc.cords.y);
-}
-/* Set the background color */
-void set_background_color(const vga_ball_color_t *c)
-{
-	vga_ball_arg_t vla;
-	vla.background = *c;
-	if (ioctl(vga_ball_fd, VGA_BALL_WRITE_BACKGROUND, &vla)) {
-		perror("ioctl(VGA_BALL_SET_BACKGROUND) failed");
-		return;
-	}
-}
-
-/* Set Cords */
-void send_cords(const vga_ball_cords_t *c)
-{
-	vga_ball_cords_arg_t vbc;
-	vbc.cords = *c;
-	if (ioctl(vga_ball_fd, VGA_BALL_WRITE_CORDS, &vbc)) {
-		perror("ioctl(VGA_BALL_WRITE_CORDS) failed");
-		return;
-	}
-}
 
 void send_limit(const aud_mem_t *c) {
 	aud_arg_t amt;
@@ -74,7 +31,6 @@ void send_limit(const aud_mem_t *c) {
 		return;
 	}
 }
-
 void send_address(const aud_mem_t *c) {
 	aud_arg_t aat;
 	aat.memory = *c;
@@ -83,8 +39,15 @@ void send_address(const aud_mem_t *c) {
 		return;
 	}
 }
-
-int get_data() {
+void send_mode(const aud_mem_t *c) {
+	aud_arg_t aat;
+	aat.memory = *c;
+	if (ioctl(aud_fd, AUD_WRITE_MODE, &aat)) {
+		perror("ioctl(AUD_WRITE_ADDRESS) failed");
+		return;
+	}
+}
+int get_aud_data() {
 	aud_arg_t aat;
 	if (ioctl(aud_fd, AUD_READ_DATA, &aat)) {
 		perror("ioctl(AUD_READ_DATA) failed");
@@ -93,15 +56,30 @@ int get_data() {
 	return aat.memory.data;
 }
 
-/*
-int get_amplitude() {
-	aud_arg_t vlc;
-	if (ioctl(aud_fd, AUD_READ_AMPLITUDE, &vlc)) {
-		perror("ioctl(AUD_READ_AMPLITUDE) failed");
-		return 0;
+void send_sprite_positions(const vga_zylo_data_t *c) {
+	vga_zylo_arg_t vzat;
+	vzat.packet = *c;
+	if (ioctl(vga_zylo_fd, VGA_ZYLO_WRITE_PACKET, &vzat)) {
+		perror("ioctl(VGA_ZYLO_WRITE_PACKET) failed");
+		return;
 	}
-	return vlc.audio.amplitude;
-}*/
+}
+void send_score(const vga_zylo_data_t *c) {
+	vga_zylo_arg_t vzat;
+	vzat.packet = *c;
+	if (ioctl(vga_zylo_fd, VGA_ZYLO_WRITE_SCORE, &vzat)) {
+		perror("ioctl(VGA_ZYLO_WRITE_SCORE) failed");
+		return;
+	}
+}
+void send_combo(const vga_zylo_data_t *c) {
+	vga_zylo_arg_t vzat;
+	vzat.packet = *c;
+	if (ioctl(vga_zylo_fd, VGA_ZYLO_WRITE_COMBO, &vzat)) {
+		perror("ioctl(VGA_ZYLO_WRITE_COMBO) failed");
+		return;
+	}
+}
 
 void updateBall(ball *obj) {
 	obj->x += obj->dx;
@@ -116,24 +94,26 @@ void updateBall(ball *obj) {
 
 int main()
 {
-	vga_ball_arg_t vla;
-	vga_ball_cords_t vbc;
+	vga_zylo_arg_t vzat;
 	
 	aud_arg_t aat;
 	aud_mem_t amt;
 
 	int i;
-	ball ball_obj = {.x = 639, .y = 299, .dx = 0, .dy = 0};
-	mem mem_obj = {.data = 0, .address = 0, .limit = 48000};
+	ball ball_obj0 = {.x = 123, .y =  42, .dx = -5, .dy = -5};
+	ball ball_obj1 = {.x = 423, .y = 211, .dx = -5, .dy = 5};
+	ball ball_obj2 = {.x =  10, .y = 123, .dx = 5,  .dy = -5};
+	ball ball_obj3 = {.x = 532, .y = 271, .dx = 5,  .dy = 5};
+	mem mem_obj = {.data = 0, .address = 0, .limit = 48000, .mode = 1};
 
-	static const char filename1[] = "/dev/vga_ball";
+	static const char filename1[] = "/dev/vga_zylo";
 	static const char filename2[] = "/dev/aud";
 
 	printf("VGA ball Userspace program started\n");
 	printf("%d\n", sizeof(int));	
 	printf("%d\n", sizeof(short));
 
-	if ((vga_ball_fd = open(filename1, O_RDWR)) == -1) {
+	if ((vga_zylo_fd = open(filename1, O_RDWR)) == -1) {
 		fprintf(stderr, "could not open %s\n", filename1);
 		return -1;
 	}
@@ -144,37 +124,47 @@ int main()
  	FILE *fp = fopen("test.txt", "w");
 	if (fp == NULL)	return -1;
 
-	vbc.x = ball_obj.x;
-	vbc.y = ball_obj.y;
-	send_cords(&vbc);
+	vga_zylo_data_t vzdt;
+ 	
+	while (1) {	
+		vzdt.data[0] = ball_obj0.x + (ball_obj0.y<<12) + (1<<24) + (1<<28);
+		vzdt.data[1] = ball_obj1.x + (ball_obj1.y<<12) + (1<<24) + (2<<28);
+		vzdt.data[2] = ball_obj2.x + (ball_obj2.y<<12) + (1<<24) + (3<<28);
+		vzdt.data[3] = ball_obj3.x + (ball_obj3.y<<12) + (1<<24) + (4<<28);
+		printf("%d, %d\n", ball_obj3.x, ball_obj3.y);
+		printf("%08x\n", vzdt.data[3]);
+		send_sprite_positions(&vzdt);
+		updateBall(&ball_obj0);
+		updateBall(&ball_obj1);
+		updateBall(&ball_obj2);
+		updateBall(&ball_obj3);
 
-	amt.size = (int) mem_obj.limit;
-	
-	usleep(1200000);
-	send_limit(&amt);
-	usleep(1200000);
-	int amp = 0;
 
-	for(int counter = 0; counter < amt.size; counter++) {
-		
-		mem_obj.address = counter;
-		amt.address = mem_obj.address;
-		//printf("%d: ", amt.address);
-
-		send_address(&amt);	
-
-		amt.data = get_data();
-		amp = amt.data;
-		//printf("%d\n", amt.data);
-		fprintf(fp, "%08x\n", amp);
-		
-		// amp = (amp >> 8) + 239;
-		// printf("%d\n", amp);
-		// vbc.y = (int) amp;
-		
-		// send_cords(&vbc);
+		usleep(10000);
 	}
-	fclose(fp);
+
+
+
+	// amt.size = (int) mem_obj.limit;
+	// amt.mode = (int) mem_obj.mode;
+	// usleep(1200000);
+	// send_mode(&amt);
+	// send_limit(&amt);
+	// usleep(12000000);
+	// int amp = 0;
+	// amt.size = 0;
+	// // send_limit(&amt);
+	// for(int counter = 0; counter < amt.size; counter++) {
+	// 		mem_obj.address = counter;
+	// 		amt.address = mem_obj.address;
+	// 	//printf("%d: ", amt.address);
+	// 		send_address(&amt);	
+	// 		amt.data = get_data();
+	// 		amp = amt.data;
+	// 	//printf("%d\n", amt.data);
+	// 		fprintf(fp, "%08x\n", amp);
+	// }
+	// fclose(fp);
 	
 	printf("VGA BALL Userspace program terminating\n");
 	return 0;

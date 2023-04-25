@@ -33,7 +33,6 @@ set_module_property REPORT_HIERARCHY false
 set_module_assignment embeddedsw.dts.vendor "csee4840"
 set_module_assignment embeddedsw.dts.name "bram"
 set_module_assignment embeddedsw.dts.group "bram"
-
 # 
 # file sets
 # 

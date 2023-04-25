@@ -125,32 +125,32 @@ module audio_control(
 
     //Instantiate hex decoders
     logic [23:0]    hexout_buffer;
-    hex7seg h5( .a(hexout_buffer[23:20]),.y(HEX5) ), // left digit
-            h4( .a(hexout_buffer[19:16]),.y(HEX4) ), 
-            h3( .a(hexout_buffer[15:12]),.y(HEX3) ), 
-            h2( .a(hexout_buffer[11:8]),.y(HEX2) ),
-            h1( .a(hexout_buffer[7:4]),.y(HEX1) ),
-            h0( .a(hexout_buffer[3:0]),.y(HEX0) );    
+    hex7seg h5( .a(buffer[3:0]),.y(HEX5) ), // left digit
+            h4( .a(result_buffer[3:0]),.y(HEX4) ), 
+            h3( .a(hexout_buffer[3:0]),.y(HEX3) ), 
+            h2( .a({1'b0, result}),.y(HEX2) ),
+            h1( .a({3'b0, bram_reading}),.y(HEX1) ),
+            h0( .a(bram_input_ctrl[3:0]),.y(HEX0) );    
 
     //Convert stereo input to mono        
     logic [23:0]    audioInMono;
     logic [15:0]    counter = 16'd0;
     wire [23:0]     buffer;
     
-    logic [2:0]     bram_input_ctrl;
-    logic [2:0]     result_buffer;
+    logic [3:0]     bram_input_ctrl;
+    logic [3:0]     result_buffer;
     logic           write_clk;
 
     always @ (*) begin
         audioInMono = (adc_right_out>>1) + (adc_left_out>>1);
         // buffer changes based on ram on or off
         case (bram_input_ctrl) 
-            3'd0 : begin
+            4'd0 : begin
                 bram_data_in = adc_out_buffer;
                 write_clk = advance;
             end
-            3'd1 : begin
-                bram_data_in = {21'b0, result_buffer};   
+            4'd1 : begin
+                bram_data_in = {20'b0, result_buffer};   
                 write_clk = flag;
             end  
         endcase
@@ -170,7 +170,7 @@ module audio_control(
         // iowrite recieved
         if (chipselect && write) begin
             case (address)
-                16'h0006 : begin
+                16'h0001 : begin
                     // initiate storage of audio samples into bram
                     // reset bram_wa to 0
                     // writing is the continuous signal that tells 
@@ -185,19 +185,19 @@ module audio_control(
                         bram_wa <= -1;
                     end
                 end
-                16'h0007 : begin
+                16'h0002 : begin
                     // choose bram read address
                     bram_ra <= writedata[15:0];
                 end
-                16'h0008 : begin
-                    bram_input_ctrl[2:0] <= writedata[2:0];
+                16'h0003 : begin
+                    bram_input_ctrl[3:0] <= writedata[3:0];
                 end
             endcase
         end   
         // ioread recieved
         if (chipselect && read) begin
             case (address)
-                16'h0005 : begin
+                16'h0000 : begin
                     // return padded buffer
                     if (buffer[23] == 1) begin 
                         readdata[23:0] <= buffer[23:0];
@@ -216,7 +216,6 @@ module audio_control(
         // this clock cycle writes the previous clock cycles 
         // adc_out_buffer into the current bram_wa
         if (write_clk) begin
-            adc_out_buffer <= audioInMono;  
             result_buffer <= result;
             // behavior during write bram procedure
             if (bram_writing && !bram_write) begin
@@ -232,9 +231,10 @@ module audio_control(
             end
         end
         if (advance) begin
+			adc_out_buffer <= audioInMono;  
         // HEX display
             if (counter[13:0] == 0) begin
-                hexout_buffer <= audioInMono;
+                hexout_buffer <= result_buffer;
             end
             counter <= counter + 1;
         end

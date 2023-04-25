@@ -36,14 +36,10 @@
 #define DRIVER_NAME "aud"
 
 /* Device registers */
-//#define BG_RED(x) (x)
-//#define BG_GREEN(x) ((x)+4)
-//#define BG_BLUE(x) ((x)+8)
-//#define CORDS_X(x) ((x)+12)
-//#define CORDS_Y(x) ((x)+16)
-#define AUD_AMP(x) ((x)+20)
-#define MEM_LMT(x) ((x)+24)
-#define MEM_ADDR(x) ((x)+28)
+#define AUD_AMP(x) (x)       //5 0
+#define MEM_LMT(x) ((x)+4)   //6 1
+#define MEM_ADDR(x) ((x)+8)  //7 2
+#define MEM_MODE(x) ((x)+12) //8 3
 
 /*
  * Information about our device
@@ -76,6 +72,12 @@ static void write_limit(aud_mem_t *memory)
 	dev.memory = *memory;
 }
 
+static void write_mode(aud_mem_t *memory)
+{
+	iowrite32(memory->mode, MEM_MODE(dev.virtbase));
+	dev.memory = *memory;
+}
+
 static void read_memory(aud_mem_t *memory)
 {
 	memory->data = ioread32(AUD_AMP(dev.virtbase));
@@ -99,6 +101,11 @@ static long aud_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 			if (copy_from_user(&vla, (aud_arg_t *) arg, sizeof(aud_arg_t)))
 				return -EACCES;
 			write_limit(&vla.memory);	
+			break;
+		case AUD_WRITE_MODE:
+			if (copy_from_user(&vla, (aud_arg_t *) arg, sizeof(aud_arg_t)))
+				return -EACCES;
+			write_mode(&vla.memory);	
 			break;
 		case AUD_WRITE_ADDRESS:
 			if (copy_from_user(&vla, (aud_arg_t *) arg, sizeof(aud_arg_t)))

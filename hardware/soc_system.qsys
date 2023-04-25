@@ -13,7 +13,7 @@
    {
       datum _sortIndex
       {
-         value = "4";
+         value = "3";
          type = "int";
       }
    }
@@ -37,7 +37,7 @@
    {
       datum _sortIndex
       {
-         value = "3";
+         value = "2";
          type = "int";
       }
    }
@@ -53,7 +53,7 @@
    {
       datum _sortIndex
       {
-         value = "6";
+         value = "5";
          type = "int";
       }
    }
@@ -61,7 +61,7 @@
    {
       datum _sortIndex
       {
-         value = "7";
+         value = "6";
          type = "int";
       }
    }
@@ -69,7 +69,7 @@
    {
       datum _sortIndex
       {
-         value = "8";
+         value = "7";
          type = "int";
       }
    }
@@ -77,7 +77,7 @@
    {
       datum _sortIndex
       {
-         value = "9";
+         value = "8";
          type = "int";
       }
    }
@@ -85,7 +85,7 @@
    {
       datum _sortIndex
       {
-         value = "10";
+         value = "9";
          type = "int";
       }
    }
@@ -101,7 +101,7 @@
    {
       datum _sortIndex
       {
-         value = "5";
+         value = "4";
          type = "int";
       }
    }
@@ -329,25 +329,12 @@
          type = "String";
       }
    }
-   element vga_ball_0
+   element vga_zylo_0
    {
       datum _sortIndex
       {
-         value = "2";
+         value = "10";
          type = "int";
-      }
-   }
-   element vga_ball_0.avalon_slave_0
-   {
-      datum _lockedAddress
-      {
-         value = "0";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "0";
-         type = "String";
       }
    }
 }
@@ -384,7 +371,7 @@
  <interface name="hps_ddr3" internal="hps_0.memory" type="conduit" dir="end" />
  <interface name="key" internal="aud_0.key" type="conduit" dir="end" />
  <interface name="reset" internal="clk_0.clk_in_reset" type="reset" dir="end" />
- <interface name="vga" internal="vga_ball_0.vga" type="conduit" dir="end" />
+ <interface name="vga" internal="vga_zylo_0.vga" type="conduit" dir="end" />
  <module name="aud_0" kind="aud" version="1.0" enabled="1">
   <parameter name="readOutSize" value="65535" />
  </module>
@@ -400,16 +387,16 @@
   <parameter name="resetSynchronousEdges" value="NONE" />
  </module>
  <module name="goertzel_0" kind="goertzel" version="1.0" enabled="1">
-  <parameter name="bin_coeff" value="0" />
+  <parameter name="bin_coeff" value="16777215" />
  </module>
  <module name="goertzel_1" kind="goertzel" version="1.0" enabled="1">
-  <parameter name="bin_coeff" value="0" />
+  <parameter name="bin_coeff" value="16777215" />
  </module>
  <module name="goertzel_2" kind="goertzel" version="1.0" enabled="1">
-  <parameter name="bin_coeff" value="0" />
+  <parameter name="bin_coeff" value="16413441" />
  </module>
  <module name="goertzel_3" kind="goertzel" version="1.0" enabled="1">
-  <parameter name="bin_coeff" value="0" />
+  <parameter name="bin_coeff" value="16196631" />
  </module>
  <module
    name="goertzel_split_0"
@@ -947,16 +934,7 @@
   <parameter name="use_default_mpu_clk" value="true" />
  </module>
  <module name="iir_detector_0" kind="iir_detector" version="1.0" enabled="1" />
- <module name="vga_ball_0" kind="vga_ball" version="1.0" enabled="1" />
- <connection
-   kind="avalon"
-   version="21.1"
-   start="hps_0.h2f_lw_axi_master"
-   end="vga_ball_0.avalon_slave_0">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0000" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
+ <module name="vga_zylo_0" kind="vga_zylo" version="1.0" enabled="1" />
  <connection
    kind="avalon"
    version="21.1"
@@ -966,7 +944,15 @@
   <parameter name="baseAddress" value="0x00040000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
- <connection kind="clock" version="21.1" start="clk_0.clk" end="vga_ball_0.clock" />
+ <connection
+   kind="avalon"
+   version="21.1"
+   start="hps_0.h2f_lw_axi_master"
+   end="vga_zylo_0.avalon_slave_0">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
  <connection kind="clock" version="21.1" start="clk_0.clk" end="bram_0.clock" />
  <connection kind="clock" version="21.1" start="clk_0.clk" end="aud_0.clock" />
  <connection
@@ -983,6 +969,7 @@
    version="21.1"
    start="clk_0.clk"
    end="goertzel_split_0.clock" />
+ <connection kind="clock" version="21.1" start="clk_0.clk" end="vga_zylo_0.clock" />
  <connection
    kind="clock"
    version="21.1"
@@ -1119,11 +1106,6 @@
   <parameter name="startPortLSB" value="0" />
   <parameter name="width" value="0" />
  </connection>
- <connection
-   kind="reset"
-   version="21.1"
-   start="clk_0.clk_reset"
-   end="vga_ball_0.reset" />
  <connection kind="reset" version="21.1" start="clk_0.clk_reset" end="aud_0.reset" />
  <connection
    kind="reset"
@@ -1155,6 +1137,11 @@
    version="21.1"
    start="clk_0.clk_reset"
    end="goertzel_0.reset" />
+ <connection
+   kind="reset"
+   version="21.1"
+   start="clk_0.clk_reset"
+   end="vga_zylo_0.reset" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
  <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
