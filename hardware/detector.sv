@@ -79,7 +79,7 @@ always @(posedge clk) begin
         for (int i = 1; i < ARR_WIDTH; i++) begin
             result_array[i] <= result_array[i-1]; 
         end
-        if(result_array.size() == ARR_WIDTH ) begin
+        if(result_array[ARR_WIDTH-1]) begin
             if (pw1_count >= `GREATER_THAN)
                 overall_result <= 3'b01;
             else if (pw2_count >= `GREATER_THAN)
@@ -131,11 +131,4 @@ end
     assign ratio_43 = power_4 /`SHIFT > power_3;
 
     assign overall_count = pw1_count + pw2_count + pw3_count + pw4_count + silence_count;
-    /*
-    assign pw1_count_greatest = (pw1_count >= pw2_count) && (pw1_count >= pw3_count) && (pw1_count >= pw4_count) && (pw1_count >= silence_count);
-    assign pw2_count_greatest = (pw2_count >= pw1_count) && (pw2_count >= pw3_count) && (pw2_count >= pw4_count) && (pw1_count >= silence_count);
-    assign pw3_count_greatest = (pw3_count >= pw1_count) && (pw3_count >= pw2_count) && (pw3_count >= pw4_count) && (pw1_count >= silence_count);
-    assign pw4_count_greatest = (pw4_count >= pw1_count) && (pw4_count >= pw2_count) && (pw4_count >= pw3_count) && (pw1_count >= silence_count);
-    assign silence_count_greatest = (silence_count >= pw1_count) && (silence_count >= pw2_count) && (silence_count >= pw3_count) && (silence_count >= pw4_count);
-    */
 endmodule
