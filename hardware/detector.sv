@@ -49,8 +49,10 @@ output logic [2:0] overall_result
     logic pw4_count_greatest;
     logic silence_count_greatest;
 
-    logic [2:0] result_array [$:ARR_WIDTH];
+    logic [2:0] result_array [ARR_WIDTH-1 : 0];
+    
 
+    
 always @(posedge clk) begin
 
     flag <= advance;
@@ -73,10 +75,11 @@ always @(posedge clk) begin
 
     if(flag)begin
 
-        result_array.push_front(result);
+        result_array[0] <= result;
+        for (int i = 1; i < ARR_WIDTH; i++) begin
+            result_array[i] <= result_array[i-1]; 
+        end
         if(result_array.size() == ARR_WIDTH ) begin
-            last_bin = result_array.pop_back();
-
             if (pw1_count >= `GREATER_THAN)
                 overall_result <= 3'b01;
             else if (pw2_count >= `GREATER_THAN)
@@ -89,7 +92,7 @@ always @(posedge clk) begin
                 overall_result <= 3'b00;
         end
 
-        if(last_bin != result) begin
+        if(result_array[ARR_WIDTH-1] != result) begin
 
             case(result) 
                 3'b00:  silence_count <= silence_count + 1;
@@ -99,7 +102,7 @@ always @(posedge clk) begin
                 3'b100: pw4_count <= pw4_count + 1;        
             endcase
 
-            case(last_bin) 
+            case(result_array[ARR_WIDTH-1]) 
                 3'b00:  silence_count <= silence_count - 1;
                 3'b01:  pw1_count <= pw1_count - 1;
                 3'b10:  pw2_count <= pw2_count - 1;
