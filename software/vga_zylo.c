@@ -61,7 +61,7 @@ static void write_packet(vga_zylo_data_t *packet)
 {
 	int i;
 	for (i = 0; i < SIZE; i++) {
-		iowrite32(packet->data[i], DATA_N(dev.virtbase)+(4*i) );
+		iowrite32(packet->data[i], DATA_N(dev.virtbase) );
 	}
 	dev.packet = *packet;
 }

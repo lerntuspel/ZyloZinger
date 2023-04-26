@@ -93,7 +93,7 @@ void updateBall(ball *obj) {
 		obj->dy = -obj->dy;
 }
 
-
+/*
 //get received note from audio, see which of four notes it is
 //get a string in return which we compare with what we get from song.txt
 //not sure what parameter to give and how to go about converting audio sample to note_id.
@@ -103,7 +103,7 @@ char* audio_received() {
     	strcopy(note_string,"0001");
 
     	return note_string;
-}
+}*/
 
 //compare received note with the actual note required
 int compare_note(char* actual_note, char* received_note) {
@@ -156,11 +156,11 @@ int main()
 	vga_zylo_data_t vzdt;
  	
 	while (1) {	
-		vzdt.data[0] = ball_obj0.x + (ball_obj0.y<<12) + (1<<24) + (1<<28);
-		vzdt.data[1] = ball_obj1.x + (ball_obj1.y<<12) + (1<<24) + (2<<28);
-		vzdt.data[2] = ball_obj2.x + (ball_obj2.y<<12) + (1<<24) + (3<<28);
-		vzdt.data[3] = ball_obj3.x + (ball_obj3.y<<12) + (1<<24) + (4<<28);
-		printf("%d, %d\n", ball_obj3.x, ball_obj3.y);
+		//vzdt.data[0] = ball_obj0.x + (ball_obj0.y<<10) + (1<<20) + (1<<28);
+		vzdt.data[1] = ball_obj1.x + (ball_obj1.y<<10) + (1<<20) + (2<<28);
+		vzdt.data[2] = ball_obj2.x + (ball_obj2.y<<10) + (1<<20) + (3<<28);
+		vzdt.data[3] = ball_obj3.x + (ball_obj3.y<<10) + (1<<20) + (4<<28);
+		//printf("%d, %d\n", ball_obj3.x, ball_obj3.y);
 		printf("%08x\n", vzdt.data[3]);
 		send_sprite_positions(&vzdt);
 		updateBall(&ball_obj0);
@@ -168,8 +168,7 @@ int main()
 		updateBall(&ball_obj2);
 		updateBall(&ball_obj3);
 
-
-		usleep(10000);
+		usleep(100000);
 	}
 
 
@@ -196,7 +195,7 @@ int main()
 	// fclose(fp);
 	
 	
-	/*very simple game logic to compare notes. Will need changes for audio_received function and rate of testing especially*/
+	/*very simple game logic to compare notes. Will need changes for audio_received function and rate of testing especially*//*
 	score = 0;
     	combo = 0;
 	
@@ -234,5 +233,6 @@ int main()
 	
 	
 	printf("VGA BALL Userspace program terminating\n");
+	*/
 	return 0;
 }

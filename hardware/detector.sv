@@ -11,15 +11,16 @@ module detector #(
 (
 input clk,
 input reset,
-input advance,
+input advance1, advance2, advance3, advance4,
 input logic signed [63:0] power_1,
 input logic signed [63:0] power_2,
 input logic signed [63:0] power_3,
 input logic signed [63:0] power_4,
 output logic [2:0] result, //00 for silence, 1-4 for powers 1-4 respectively
-output logic [2:0] overall_result
+output logic [2:0] overall_result,
+output logic flag
 );
-    logic flag;
+    logic advance;
 
     logic ratio_12;
     logic ratio_13;
@@ -51,7 +52,7 @@ output logic [2:0] overall_result
 
     logic [2:0] result_array [ARR_WIDTH-1 : 0];
     
-
+	
     
 always @(posedge clk) begin
 
@@ -79,7 +80,7 @@ always @(posedge clk) begin
         for (int i = 1; i < ARR_WIDTH; i++) begin
             result_array[i] <= result_array[i-1]; 
         end
-        if(result_array.size() == ARR_WIDTH ) begin
+        if(result_array[ARR_WIDTH-1]) begin
             if (pw1_count >= `GREATER_THAN)
                 overall_result <= 3'b01;
             else if (pw2_count >= `GREATER_THAN)
@@ -131,11 +132,6 @@ end
     assign ratio_43 = power_4 /`SHIFT > power_3;
 
     assign overall_count = pw1_count + pw2_count + pw3_count + pw4_count + silence_count;
-    /*
-    assign pw1_count_greatest = (pw1_count >= pw2_count) && (pw1_count >= pw3_count) && (pw1_count >= pw4_count) && (pw1_count >= silence_count);
-    assign pw2_count_greatest = (pw2_count >= pw1_count) && (pw2_count >= pw3_count) && (pw2_count >= pw4_count) && (pw1_count >= silence_count);
-    assign pw3_count_greatest = (pw3_count >= pw1_count) && (pw3_count >= pw2_count) && (pw3_count >= pw4_count) && (pw1_count >= silence_count);
-    assign pw4_count_greatest = (pw4_count >= pw1_count) && (pw4_count >= pw2_count) && (pw4_count >= pw3_count) && (pw1_count >= silence_count);
-    assign silence_count_greatest = (silence_count >= pw1_count) && (silence_count >= pw2_count) && (silence_count >= pw3_count) && (silence_count >= pw4_count);
-    */
+
+    assign advance = (advance1||advance2||advance3||advance4);
 endmodule
