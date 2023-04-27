@@ -156,10 +156,10 @@ int main()
 	vga_zylo_data_t vzdt;
  	
 	while (1) {	
-		vzdt.data[0] = sprite_obj0.x + (sprite_obj0.y<<10) + (1<<20) + (1<<28);
-		vzdt.data[1] = sprite_obj1.x + (sprite_obj1.y<<10) + (1<<20) + (2<<28);
-		vzdt.data[2] = sprite_obj2.x + (sprite_obj2.y<<10) + (1<<20) + (3<<28);
-		vzdt.data[3] = sprite_obj3.x + (sprite_obj3.y<<10) + (1<<20) + (4<<28);
+		vzdt.data[0] = sprite_obj0.x + (sprite_obj0.y<<10) + (1<<20) + (1<<26);
+		vzdt.data[1] = sprite_obj1.x + (sprite_obj1.y<<10) + (1<<20) + (2<<26);
+		vzdt.data[2] = sprite_obj2.x + (sprite_obj2.y<<10) + (1<<20) + (3<<26);
+		vzdt.data[3] = sprite_obj3.x + (sprite_obj3.y<<10) + (1<<20) + (4<<26);
 		//printf("%d, %d\n", sprite_obj3.x, sprite_obj3.y);
 		printf("%08x\n", vzdt.data[3]);
 		send_sprite_positions(&vzdt);

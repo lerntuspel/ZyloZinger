@@ -101,44 +101,14 @@ int main()
 	aud_mem_t amt;
 
 	sprite *sprites = NULL;	
-
+	int r = rand() % 20;
 	sprites = calloc(32, sizeof(*sprites));
-
-	sprites[0].x = 123;
-	sprites[0].y =  42; 
-	sprites[0].dx = -1; 
-	sprites[0].dy = -1; 
-	sprites[0].id = 1;
-	sprites[0].index = 0;
-
-	sprites[1].x = 500;
-	sprites[1].y = 400; 
-	sprites[1].dx = -1; 
-	sprites[1].dy = 1; 
-	sprites[1].id = 1;
-	sprites[1].index = 1;
-
-	sprites[2].x = 234;
-	sprites[2].y = 142; 
-	sprites[2].dx = 1; 
-	sprites[2].dy = -1; 
-	sprites[2].id = 1;
-	sprites[2].index = 2;
-
-	sprites[3].x = 351;
-	sprites[3].y = 242; 
-	sprites[3].dx = 1; 
-	sprites[3].dy = 1; 
-	sprites[3].id = 1;
-	sprites[3].index = 3;
-	
-
-	for (int i = 4; i < 32; i++) {
-		sprites[i].x = 0; 
-		sprites[i].y = 0;
-		sprites[i].dx = 0;  
-		sprites[i].dy = 0; 
-		sprites[i].id = 0;
+	for (int i = 0; i < 32; i++) {
+		sprites[i].x = rand() % 639; 
+		sprites[i].y = rand() % 479;
+		sprites[i].dx = 1;  
+		sprites[i].dy = 1; 
+		sprites[i].id = 1;
 		sprites[i].index = i;
 	}
 	// /mem mem_obj = {.data = 0, .address = 0, .limit = 48000, .mode = 1};
@@ -174,11 +144,11 @@ int main()
 		send_sprite_positions(&vzdt);
 
 		//update spirtes on software side
-		updateBall(&sprites[0]);
-		updateBall(&sprites[1]);
-		updateBall(&sprites[2]);
-		updateBall(&sprites[3]);
-		usleep(10000);
+		
+		for (int i = 0; i < 32; i++) {
+			updateBall(&sprites[i]);
+		}
+		usleep(1000);
 	}
 	free (sprites);
 
