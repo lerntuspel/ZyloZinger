@@ -25,6 +25,6 @@ typedef struct {
 #define VGA_ZYLO_WRITE_PACKET _IOW(VGA_ZYLO_MAGIC, 5, vga_zylo_arg_t *)
 #define VGA_ZYLO_WRITE_SCORE _IOW(VGA_ZYLO_MAGIC, 6, vga_zylo_arg_t *)
 #define VGA_ZYLO_WRITE_COMBO _IOW(VGA_ZYLO_MAGIC, 7, vga_zylo_arg_t *)
-#define VGA_ZYLO_READ_PACKET _IOW(VGA_ZYLO_MAGIC, 8, vga_zylo_arg_t *)
+#define VGA_ZYLO_READ_PACKET _IOR(VGA_ZYLO_MAGIC, 8, vga_zylo_arg_t *)
 
 #endif
