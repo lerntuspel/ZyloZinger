@@ -17,8 +17,8 @@ typedef struct {
 } vga_zylo_arg_t;
 
 typedef struct {
-	int x, y, dx, dy;
-} ball;
+	int x, y, dx, dy, id, index;
+} sprite;
 #define VGA_ZYLO_MAGIC 'q'
 
 /* ioctls and their arguments */

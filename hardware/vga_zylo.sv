@@ -30,30 +30,67 @@ module vga_zylo(
 
     // display up to 16 falling notes on screen
     // writedata note packet
-    // |  31  |      27:24      |      15:12       |      9:0       | 
-    // |  en  |  note_id 4 bits | note_type 4 bits | y-cord 10 bits | 
-    // | 1/0  |      0-15       |  notes 1,2,3,4   |     0-479      |
+    // |  31:26  |      25:20      |       9:10       |      9:0       | 
+    // |  index  |  note_id 6 bits | note_type 4 bits | y-cord 10 bits | 
+    // |  0-63   |      0-63       |  notes 1,2,3,4   |     0-479      |
     // ex:   32h'1a004101 => en = 1, id = 10, type = 0100, y-cord = 256.
 
     //store up to 16 notes. each note is built with 32 8x8 pixel sprites
-    logic [31:0][9:0]  sprites_x;
-    logic [31:0][9:0]  sprites_y;
-    logic [31:0][5:0]  sprites_n;
-    
+    logic           sprites_write;
+    logic [5:0]     sprites_write_address;
+    logic [5:0]     sprites_read_address;
+    logic [9:0]     sprites_x_cord;
+    logic [9:0]     sprites_y_cord;
+    logic [5:0]     sprites_n_value;
+    logic [9:0]     x, y;
+    twoportbram #(
+        .RAM_WIDTH(10),
+        .RAM_ADDR_BITS(6),
+        .RAM_WORDS(6'h3f)
+    ) sprites_x (
+        .clk(clk),
+        .ra(sprites_read_address), 
+        .wa(sprites_write_address),
+        .write(sprites_write),
+        .data_in(sprites_x_cord),
+        .data_out(x)
+    );
+    twoportbram #(
+        .RAM_WIDTH(10),
+        .RAM_ADDR_BITS(6),
+        .RAM_WORDS(6'h3f)
+    ) sprites_y (
+        .clk(clk),
+        .ra(sprites_read_address), 
+        .wa(sprites_write_address),
+        .write(sprites_write),
+        .data_in(sprites_y_cord),
+        .data_out(y)
+    );
+    twoportbram #(
+        .RAM_WIDTH(6),
+        .RAM_ADDR_BITS(6),
+        .RAM_WORDS(6'h3f)
+    ) sprites_n (
+        .clk(clk),
+        .ra(sprites_read_address), 
+        .wa(sprites_write_address),
+        .write(sprites_write),
+        .data_in(sprites_n_value),
+        .data_out(n)
+    );
+
     logic [15:0]        score;
     logic [15:0]        combo;
     logic [31:0]        menu;    // | 1 bit   | 8 bits |   8 bits  |s
                                 // | display | item   | submenu # |
     logic [31:0]        gamedata;
     logic               reset_sw;
-
+    
     always_ff @(posedge clk) begin
         if (reset) begin
-            sprites_x   <=  {32{10'd0}}; // up to 31 sprites to display on screen
-            sprites_y   <=  {32{10'd0}};
-            sprites_n   <=  {32{6'd0}}; // number of active sprites
-            score       <=  {4{4'h0}};
-            combo       <=  {4{4'h0}};
+            score       <=  16'h0;
+            combo       <=  16'h0;
 
         // data from avalon bus writes a piece of data to vram
         end else if (chipselect && write) begin
@@ -69,41 +106,71 @@ module vga_zylo(
                     // note sprite sent             //32'h |000|00000|
                 4'h6 :    begin                     //     |id | y x |
                     // store all top right corner coods of a "note"
-                    sprites_x   [writedata[31:28]][9:0] <=  writedata[9:0];
-                    sprites_y   [writedata[31:28]][9:0] <=  writedata[19:10];
-                    sprites_n   [writedata[31:28]][5:0] <=  writedata[25:20];
+                    sprites_write_address   <= writedata[31:26];
+                    sprites_x_cord          <= writedata[9:0];
+                    sprites_y_cord          <= writedata[19:10];
+                    sprites_n_value         <= writedata[25:20];
+                    sprites_write           <= 1;
                 end
-
             endcase
+        end else if (sprites_write) begin
+            sprites_write <= 0;
         end
     end
 
     logic [9:0]         line;
     logic [31:0][23:0]  pattern;
-    //logic [5:0]         length;
     logic [5:0]         n;
-    // sprites in sprites.sv are ordered from least prioety to highest priorety
-    
+    assign line = vcount - y;
 	sprites sprites0(
         .n_sprite (n),
         .clk (clk),
         .line (line),
         .pattern (pattern)
         );
-	
 
-    logic [9:0] x, y;
-    logic [639:0][23:0] buf_e;
-    logic [639:0][23:0] buf_o;
+
     logic [3:0] stage;
-    logic [8:0] count;
     logic [5:0] pixel;
-    logic [9:0] xposition;
+    logic [9:0] xposition;  //on written buffer
+    logic [23:0] buf_o_in, buf_e_in;
+    logic [23:0] buf_o_out, buf_e_out;
     logic done;
-
     assign xposition = x + {4'd0, pixel};
+
+    logic buf_o_w;
+    logic buf_e_w;
+
+    twoportbram #(
+        .RAM_WIDTH(24),
+        .RAM_ADDR_BITS(10),
+        .RAM_WORDS(10'h280)
+    ) buf_o_bram (
+        .clk(clk),
+        .ra(hcount[10:1]), 
+        .wa(xposition),
+        .write(buf_o_w),
+        .data_in(buf_o_in),
+        .data_out(buf_o_out)
+    );
+    twoportbram #(
+        .RAM_WIDTH(24),
+        .RAM_ADDR_BITS(10),
+        .RAM_WORDS(10'h280)
+    ) buf_e_bram (
+        .clk(clk),
+        .ra(hcount[10:1]), 
+        .wa(xposition),
+        .write(buf_e_w),
+        .data_in(buf_e_in),
+        .data_out(buf_e_out)
+    );
+
+
+
     //paint basic background
     logic [23:0] bg_color;
+    logic [23:0] buf_bg_color;
     always_ff @(posedge clk) begin
         if      (vcount == 10'd0)   bg_color <= 24'h223399;
         else if (vcount == 10'd80)  bg_color <= 24'h2244AA;
@@ -117,63 +184,61 @@ module vga_zylo(
 
     always_ff @(posedge clk) begin
         if(reset) begin
-            buf_e <= {640{24'hdd1122}};
-            buf_o <= {640{24'hdd1122}};
             stage <= 0;
-            count <= 0;
+            sprites_read_address <= 0;
             pixel <= 0;
             done <= 1;
         end else begin
-            // create new "canvas" if hcount is over 640 and vcount has just changed
+            // // create new "canvas" if hcount is over 640 and vcount has just changed
             if (vcount[0]) begin     // output buffer_odd, edit buffer_even
-                if ((hcount[10:1] > 640) && (vcount < 10'd480))
-                    buf_o <= {640{bg_color}};     // background color
+                buf_o_w <= 0;
+                buf_e_w <= 1;
             end else begin         // output buffer_even, edit buffer_odd
-                if ((hcount[10:1] > 640) && (vcount < 10'd480))
-                    buf_e <= {640{bg_color}};     // background color
+                buf_o_w <= 1;
+                buf_e_w <= 0;
             end
 
             if (hcount == 11'd1) begin
-                done <= 0;  // 0/1
-                stage <= 0; // 0-2
-                count <= 0; // 0-127
-                pixel <= 0; // 0-31
+                done <= 0;                  // 0/1
+                stage <= 0;                 // 0-2
+                sprites_read_address <= 0;  // 0-63
+                pixel <= 0;                 // 0-31
             end
             if(~done)begin
                 case(stage)
                     4'd0 : begin
-                        n <= sprites_n[count];
-                        x <= sprites_x[count];
-                        y <= sprites_y[count];
+                        sprites_read_address <= 6'd0;
                         pixel <= 0;
-                        if (vcount >= 10'd479) // if vcount is off the screen -> new screen
-                            line <= 10'd32;		// end early
-                        else
-                            line <= vcount - sprites_y[count];
                         stage <= stage + 4'd1;
+                        // x,y,n usable in following clock cycle 
                     end
-                    4'd1 : begin
-                        if ((n == 0) || (line >= 32)) begin // not in this line
-                            pixel <= 6'd0;
-                            stage <= 4'd0;
-                            if (count < 9'd32) // check if there are more sprites to check (existance of 32 potential sprites)
-                                count <= count + 8'd1;
+                    4'd1 : begin    //skips a sprite or check for end of sprite addresses 
+                        if ((n == 0) || (vcount - y >= 32)) begin   // target sprite not in this line
+                            pixel <= 6'd0;                          // reset pixel
+                            stage <= 4'd0;                          // reset stage
+                            if (sprites_read_address < 9'd32) // check if there are more sprites to check (existance of 32 potential sprites)
+                                sprites_read_address <= sprites_read_address + 8'd1;
                             else
                                 done <= 1;
-                        end else begin
+                        end else begin // move to next stage if is in line
                             stage <= stage + 4'd1;
                         end
+                        // line ready
                     end
                     4'd2 : begin
-                        if (vcount[0]) begin     // output buffer_odd, edit buffer_even
-                            if (pattern[pixel] != 24'h0) begin
-                                if (xposition < 10'd640)
-                                    buf_e[xposition] <= pattern[pixel];
+                        if (vcount[0]) begin        // output buffer_odd, edit buffer_even
+                            if (xposition < 10'd640) begin
+                                if (pattern[pixel] == 24'h0) 
+                                    buf_e_in <= bg_color;
+                                else
+                                    buf_e_in <= pattern[pixel];
                             end
-                        end else begin             // output buffer_even, edit buffer_odd
-                            if (pattern[pixel] != 24'h0) begin
-                                if (xposition < 10'd640)
-                                    buf_o[xposition] <= pattern[pixel];
+                        end else begin              // output buffer_even, edit buffer_odd
+                            if (xposition < 10'd640) begin
+                                if (pattern[pixel] == 24'h0) 
+                                    buf_o_in <= bg_color;
+                                else
+                                    buf_o_in <= pattern[pixel];
                             end
                         end
 						// repeat writing stage pixel is 30 or under
@@ -184,8 +249,8 @@ module vga_zylo(
                         end else begin
                             pixel <= 6'd0;
                             stage <= 4'd0;
-                            if (count < 9'd32)
-                                count <= count + 8'd1;
+                            if (sprites_read_address < 9'd32)
+                                sprites_read_address <= sprites_read_address + 8'd1;
                             else
                                 done <= 1;
                         end
@@ -202,9 +267,15 @@ module vga_zylo(
         if (VGA_BLANK_n )
             if (vcount < 10'd480) begin
                 if (vcount[0]) begin    // output buffer_odd, edit buffer_even
-                    {VGA_R, VGA_G, VGA_B} = buf_o[hcount[10:1]][23:0];
+                    if (buf_o_out != bg_color)
+                        {VGA_R, VGA_G, VGA_B} = buf_o_out;
+                    else 
+                        {VGA_R, VGA_G, VGA_B} = {bg_color};
                 end else begin            // output buffer_even, edit buffer_odd
-                    {VGA_R, VGA_G, VGA_B} = buf_e[hcount[10:1]][23:0];
+                    if (buf_e_out != bg_color)
+                        {VGA_R, VGA_G, VGA_B} = buf_e_out;
+                    else 
+                        {VGA_R, VGA_G, VGA_B} = {bg_color};
                 end
             end
     end

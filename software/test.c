@@ -1,7 +1,7 @@
 /*
  * Userspace program that communicates with the aud and vga_vylo device driver
  * through ioctls
- * current amplitude will be represented as the y position of the sprite from vga_vylo
+ * current amplitude will be represented as the y position of the ball from vga_vylo
  * reads audio and then sends amplituded
  * ayu2126
  * Columbia University
@@ -82,7 +82,7 @@ void send_combo(const vga_zylo_data_t *c) {
 	}
 }
 
-void updatesprite(sprite *obj) {
+void updateBall(sprite *obj) {
 	obj->x += obj->dx;
 	obj->y += obj->dy;
 	
@@ -93,34 +93,6 @@ void updatesprite(sprite *obj) {
 		obj->dy = -obj->dy;
 }
 
-/*
-//get received note from audio, see which of four notes it is
-//get a string in return which we compare with what we get from song.txt
-//not sure what parameter to give and how to go about converting audio sample to note_id.
-char* audio_received() {
-    	//example
-    	char *note_string = malloc(6);
-    	strcopy(note_string,"0001");
-
-    	return note_string;
-}*/
-
-//compare received note with the actual note required
-int compare_note(char* actual_note, char* received_note) {
-    	int note_same;
-    	int i;
-    	for (i = 0; i < sizeof(actual_note); i++) {
-        	if (actual_note[i] != received_note[i]) {
-            		note_same = 0;
-            		break;
-        	} else {
-            		note_same = 1;
-        	}
-    	}
-    	return note_same;
-}
-
-
 int main()
 {
 	vga_zylo_arg_t vzat;
@@ -128,17 +100,53 @@ int main()
 	aud_arg_t aat;
 	aud_mem_t amt;
 
-	int i;
-	sprite sprite_obj0 = {.x = 123, .y =  42, .dx = -1, .dy = -1};
-	sprite sprite_obj1 = {.x = 423, .y = 211, .dx = -1, .dy = 1};
-	sprite sprite_obj2 = {.x =  10, .y = 123, .dx = 1,  .dy = -1};
-	sprite sprite_obj3 = {.x = 532, .y = 271, .dx = 1,  .dy = 1};
-	mem mem_obj = {.data = 0, .address = 0, .limit = 48000, .mode = 1};
+	sprite *sprites = NULL;	
+
+	sprites = calloc(32, sizeof(*sprites));
+
+	sprites[0].x = 123;
+	sprites[0].y =  42; 
+	sprites[0].dx = -1; 
+	sprites[0].dy = -1; 
+	sprites[0].id = 1;
+	sprites[0].index = 0;
+
+	sprites[1].x = 500;
+	sprites[1].y = 400; 
+	sprites[1].dx = -1; 
+	sprites[1].dy = 1; 
+	sprites[1].id = 1;
+	sprites[1].index = 1;
+
+	sprites[2].x = 234;
+	sprites[2].y = 142; 
+	sprites[2].dx = 1; 
+	sprites[2].dy = -1; 
+	sprites[2].id = 1;
+	sprites[2].index = 2;
+
+	sprites[3].x = 351;
+	sprites[3].y = 242; 
+	sprites[3].dx = 1; 
+	sprites[3].dy = 1; 
+	sprites[3].id = 1;
+	sprites[3].index = 3;
+	
+
+	for (int i = 4; i < 32; i++) {
+		sprites[i].x = 0; 
+		sprites[i].y = 0;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 0; 
+		sprites[i].id = 0;
+		sprites[i].index = i;
+	}
+	// /mem mem_obj = {.data = 0, .address = 0, .limit = 48000, .mode = 1};
 
 	static const char filename1[] = "/dev/vga_zylo";
 	static const char filename2[] = "/dev/aud";
 
-	printf("VGA sprite Userspace program started\n");
+	printf("VGA zylo test Userspace program started\n");
 	printf("%d\n", sizeof(int));	
 	printf("%d\n", sizeof(short));
 
@@ -155,21 +163,24 @@ int main()
 
 	vga_zylo_data_t vzdt;
  	
-	while (1) {	
-		vzdt.data[0] = sprite_obj0.x + (sprite_obj0.y<<10) + (1<<20) + (1<<28);
-		vzdt.data[1] = sprite_obj1.x + (sprite_obj1.y<<10) + (1<<20) + (2<<28);
-		vzdt.data[2] = sprite_obj2.x + (sprite_obj2.y<<10) + (1<<20) + (3<<28);
-		vzdt.data[3] = sprite_obj3.x + (sprite_obj3.y<<10) + (1<<20) + (4<<28);
-		//printf("%d, %d\n", sprite_obj3.x, sprite_obj3.y);
-		printf("%08x\n", vzdt.data[3]);
+	while (1) {
+		//package the sprites together	
+		for (int i = 0; i < 32; i++) {
+			vzdt.data[i] = (sprites[i].index<<26) + (sprites[i].id<<20) + (sprites[i].y<<10) + (sprites[i].x<<0);
+		}
+		printf("%08x, %08x, %08x, %08x\n", vzdt.data[0], vzdt.data[1], vzdt.data[2], vzdt.data[3]);
+		
+		//send package to hardware
 		send_sprite_positions(&vzdt);
-		updatesprite(&sprite_obj0);
-		updatesprite(&sprite_obj1);
-		updatesprite(&sprite_obj2);
-		updatesprite(&sprite_obj3);
 
-		usleep(20000);
+		//update spirtes on software side
+		updateBall(&sprites[0]);
+		updateBall(&sprites[1]);
+		updateBall(&sprites[2]);
+		updateBall(&sprites[3]);
+		usleep(10000);
 	}
+	free (sprites);
 
 
 
@@ -194,45 +205,6 @@ int main()
 	// }
 	// fclose(fp);
 	
-	
-	/*very simple game logic to compare notes. Will need changes for audio_received function and rate of testing especially*//*
-	score = 0;
-    	combo = 0;
-	
-	//read song.txt line by line to get the notes that should be played.
-    	FILE *textfile;
-    	char line[6];
-    	char *incoming_note;
 
-   	textfile = fopen("song.txt","r");
-	if (textfile == NULL) return -1;
-
-    	//need to change rate at which we test
-    	while (fgets(line, sizeof(line), textfile)) {
-        	line[strcspn(line,"\n")] = '\0';
-
-        	//see what the incoming note is, convert it to a string
-        	incoming_note = audio_received(); //see what parameter to give
-		
-		//compare incoming note with expected note
-        	same_note = compare_note(line,incoming_note);
-        
-       		if (same_note == 1) {
-            		combo += 1;
-            		score += 10 + (5*combo);
-            		//change sprite color to show correct note played?
-        	} else {
-            		combo = 0;
-            		//change sprite color to show wrong note played?
-        	}
-        	free(incoming_note);
-
-        	//how to change rate at which we compare notes?
-		//can we use usleep to delay the loop?
-    	}
-	
-	
-	printf("VGA sprite Userspace program terminating\n");
-	*/
 	return 0;
 }

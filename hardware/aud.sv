@@ -3,21 +3,6 @@
  * Top Level Module
  * 
  * Storage procedure
-
-normal: read from source, ram write/read disabled
-    write_enable = 0
-    ram_enable = 0
-store into bram sequencially: write enabled read enabled
-    write_enable = 1
-    ram_enable = 1
-read from bram sequencially: write disabled read enabled 
-as read commands come in
-    write_enable = 0
-    ram_enable = 1
-return to normal
-    write_enable = 0
-    ram_enable = 0
-
  * Columbia University
  */
 
