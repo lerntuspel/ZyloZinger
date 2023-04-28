@@ -10,12 +10,14 @@ else
 	KERNEL_SOURCE := /usr/src/linux-headers-$(shell uname -r)
         PWD := $(shell pwd)
 
-default: module hello
+default: module game
 
 hello: hello.c
 	gcc -o hello hello.c
 test: test.c
 	gcc -o test test.c
+game: Game_Logic.c
+	gcc -o zylo Game_Logic.c
 module:
 	${MAKE} -C ${KERNEL_SOURCE} SUBDIRS=${PWD} modules
 

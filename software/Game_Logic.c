@@ -8,7 +8,8 @@
  */
 
 #include <stdio.h>
-#include "vga_zylo.h"
+#include "vga_zylo_new.h" 
+//#include "vga_zylo.h"
 #include "aud.h"
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -20,6 +21,8 @@
 
 #define X_MAX 640 
 #define Y_MAX 480
+#define VALID_MAX 450
+#define VALID_MIN 380
 
 int vga_zylo_fd;
 int aud_fd;
@@ -85,7 +88,7 @@ void send_combo(const vga_zylo_data_t *c) {
 //get received note from audio, see which of four notes it is
 //get a string in return which we compare with what we get from song.txt
 //not sure what parameter to give and how to go about converting audio sample to note_id.
-char* audio_received() {
+/*char* audio_received() {
     	//example
     	char *note_string = malloc(6);
     	strcopy(note_string,"0001");
@@ -107,9 +110,9 @@ int compare_note(char* actual_note, char* received_note) {
     	}
     	return note_same;
 }
+*/
 
-
-void init_sprites(vga_zylo_arg_t* sprite_data){
+void init_sprites(vga_zylo_data_t* sprite_data){
 /*
 	Initializes the zylo send data with the initial sprite IDs
 	and initial sprite locations defined in vga_zylo.h
@@ -118,13 +121,13 @@ void init_sprites(vga_zylo_arg_t* sprite_data){
 */	
 	for(int i = 0; i < 64; i++){
 
-		sprite_data->data[i] = pos_init[i][0] + (pos_init[i][1]<<10) + (pos_init[i][2]<<20) + (i<<28);
+		sprite_data->data[i] = pos_init[i][0] + (pos_init[i][1]<<10) + (pos_init[i][2]<<20) + (i<<26);
 
 	}
 
 }
 
-void init_balls(sprites** balls){
+void init_balls(sprite** balls){
 /*
 	Initializes the falling ball objects with the initial sprite IDs
 	and initial sprite locations defined in vga_zylo.h
@@ -133,8 +136,9 @@ void init_balls(sprites** balls){
 */
 	for(int note = 0; note < num_notes; note++){
 		for(int i = 0; i < size; i++){
-			balls[note][2*i] = {.x = x_notes[2*note], .y =  10, .dx = 0, .dy = 0, .id = 0, .scored = 0};
-			balls[note][2*i + 1] = {.x = x_notes[2*note + 1], .y =  10, .dx = 0, .dy = 0, .id = 0, .scored = 0};
+			//separate to . notation for each element
+			//balls[note][2*i] = {.x = x_notes[2*note], .y =  10, .dx = 0, .dy = 0, .id = 0, .scored = 0};
+			//balls[note][2*i + 1] = {.x = x_notes[2*note + 1], .y =  10, .dx = 0, .dy = 0, .id = 0, .scored = 0};
 		}
 	}
 }
@@ -181,9 +185,9 @@ int dequeue(queue_t *available_queue, int note){
 	Inputs: available_queue -> list of a availabilty queue for 
 				   each note
 	        note -> value from 0 to num_notes - 1
-*/	
+*/	int out;
 	if(available_queue[note].len != 0){
-		int out = available_queue[note].arr[i];
+		out = available_queue[note].arr[0];
 		for(int i = 0; i < available_queue[note].len - 1; i++)
 			available_queue[note].arr[i] = available_queue[note].arr[i + 1];
 		
@@ -208,7 +212,7 @@ void print_q(queue_t *available_queue){
 
 }
 
-void update(sprite** balls, queue_t available_queues, int* score, int* combo){
+void update(sprite** balls, queue_t* available_queues, int* score, int* combo){
 /*
 	This function performs the following tasks
 	  1. updates availibility queue 
@@ -217,27 +221,29 @@ void update(sprite** balls, queue_t available_queues, int* score, int* combo){
 	  4. updates combo
 */
 
-	bool combo_flag = FALSE, in_valid_region = FALSE;
+	int combo_flag = 0;
+	int in_valid_region = 0;
 
-	for(int note = 0; note < num_notes, note++){
+	for(int note = 0; note < num_notes; note++){
 		
-		for(int j = 0; j < size, j++){
+		for(int j = 0; j < size; j++){
 			
-			detected_note = get_note(); // Need to implement this logic
+			int detected_note = 0; // get_note(); // Need to implement this logic
 			
 			// Update ball y coordinate
-			balls[note][j].y += balls[i][j].dy;
+			balls[note][j].y += balls[note][j].dy;
 
 			/* Scoring and Comboing Logic */
 
 			// Checking if note is in valid region
-			in_valid_region = (balls[note][2*j].y > VALID_MIN) && (balls[note][2*j].y < VALID_MIN);			
+			in_valid_region = (balls[note][2*j].y > VALID_MIN) && (balls[note][2*j].y < VALID_MAX);			
 			
 			// Checking detected note and if the note has already been scored
 			if(in_valid_region && balls[note][2*j].scored == 0 && detected_note == note){
 				if(combo_flag)
 					*combo++;
 				*score++;
+				combo_flag = 1;
 				balls[note][2*j].scored = 1;
 				balls[note][2*j + 1].scored = 1;
 			}
@@ -248,16 +254,19 @@ void update(sprite** balls, queue_t available_queues, int* score, int* combo){
 				// Check if an unscored ball gets reset
 				if(balls[note][j].scored == 0){
 
-					combo_flag = FALSE;
+					combo_flag = 0;
 					*combo = 0;
 
 				}
 				
 				// reset balls
-				enqueue(available_queues, j);
-				balls[note][2*j] = {.x = x_notes[2*note], .y =  10, .dx = 0, .dy = 0, .id = 0, .scored = 0};
+				enqueue(available_queues, j, note);
+				/*
+				balls[note][2*j] = {.x = , .y =  10, .dx = 0, .dy = 0, .id = 0, .scored = 0};
+				balls[note][2*j].x = x_notes[2*note];
+				
 				balls[note][2*j + 1] = {.x = x_notes[2*note + 1], .y =  10, .dx = 0, .dy = 0, .id = 0, .scored = 0};
-
+				*/
 			}
 
 		}
@@ -265,7 +274,7 @@ void update(sprite** balls, queue_t available_queues, int* score, int* combo){
 
 }
 
-void update_send_data(sprite **balls, int* score, int* combo, vga_zylo_arg_t* zylo_send_data){
+void update_send_data(sprite **balls, int* score, int* combo, vga_zylo_data_t* zylo_send_data){
 /*
 	this function performs the following tasks
 	  1. Updates the x,y positions and sprite id's of the moving balls 
@@ -274,29 +283,29 @@ void update_send_data(sprite **balls, int* score, int* combo, vga_zylo_arg_t* zy
 */
 
 	// Updating Ball parameters in zylo_send_data
-	for(int note = 0; note < num_notes, note++){
-		for(int j = 0; j < size, j++){
-			zylo_send_data->data[6*note + 2*j] = balls[note][2*j].x + (balls[note][2*j].y<<10) + (balls[note][2*j].id<<20) + ((6*note + 2*j)<<28);
-			zylo_send_data->data[6*note + 2*j + 1] = balls[note][2*j + 1].x + (balls[note][2*j + 1].y<<10) + (balls[note][2*j + 1].id<<20) + ((6*note + 2*j + 1)<<28);
+	for(int note = 0; note < num_notes; note++){
+		for(int j = 0; j < size; j++){
+			zylo_send_data->data[6*note + 2*j] = balls[note][2*j].x + (balls[note][2*j].y<<10) + (balls[note][2*j].id<<20) + ((6*note + 2*j)<<26);
+			zylo_send_data->data[6*note + 2*j + 1] = balls[note][2*j + 1].x + (balls[note][2*j + 1].y<<10) + (balls[note][2*j + 1].id<<20) + ((6*note + 2*j + 1)<<26);
 		}
 	}
 
 	// Updating Score parameters in zylo_send_data
-	zylo_send_data->data[34].id = *score % 10 + 30;
-	zylo_send_data->data[35].id = (*score % 100) / 10 + 30;
-	zylo_send_data->data[36].id = (*score % 1000_ / 100 + 30;
-
+	zylo_send_data->data[34] += ((*score % 10 + 30)<<20) - (((zylo_send_data->data[34]>>20)<<26)>>6);
+	zylo_send_data->data[35] += ((*score % 100 + 30)<<20) - (((zylo_send_data->data[35]>>20)<<26)>>6);
+	zylo_send_data->data[36] += ((*score % 1000 + 30)<<20) - (((zylo_send_data->data[36]>>20)<<26)>>6);
+	
 	// Updating Combo parameters in zylo_send_data
-	zylo_send_data->data[37].id = *combo % 10 + 30;
-	zylo_send_data->data[38].id = (*combo % 100) / 10 + 30;
-	zylo_send_data->data[39].id = (*combo % 1000) / 100 + 30;
+	zylo_send_data->data[34] += ((*combo % 10 + 30)<<20) - (((zylo_send_data->data[34]>>20)<<26)>>6);
+	zylo_send_data->data[35] += ((*combo % 100 + 30)<<20) - (((zylo_send_data->data[35]>>20)<<26)>>6);
+	zylo_send_data->data[36] += ((*combo % 1000 + 30)<<20) - (((zylo_send_data->data[36]>>20)<<26)>>6);
 
 }
 
 int main(){
 
 	vga_zylo_arg_t vzat;
-	vga_zylo_arg_t zylo_send_data;
+	vga_zylo_data_t zylo_send_data;
 	
 	aud_arg_t aat;
 	aud_mem_t amt;
@@ -321,30 +330,33 @@ int main(){
 	
  	FILE *fp = fopen("test.txt", "w");
 	if (fp == NULL)	return -1;
-
+/*
 	FILE *fp_r = fopen('GameLogic.txt',"r");
 	if (fp_r == NULL)	return -1;	
-
+*/
 
 	/* Initialize the positions of sprites and send them to hardware */
 	init_sprites(&zylo_send_data);	
-	send_sprite_positions(&zylo_send_data);
+	// send_sprite_positions(&zylo_send_data);
 
 	/* Controlling the Falling Notes */
 
-	char[50] buffer;
-	int game_counter = 0;
+	// char[50] buffer;
+	// int game_counter = 0;
 
-	fscanf(fp_r, "%s", buffer);
-	int iters = atoi(buffer)
-	int available = 0, dy_new = -1, score = 0, combo = 0;
-
+	// fscanf(fp_r, "%s", buffer);
+	// int iters = atoi(buffer)
+	// int available = 0; 
+	// int dy_new = -1; 
+	// int score = 0; 
+	// int combo = 0;
+/*
 	// Creating and initializing a ball array for each note
 	sprite[num_notes][2*size] balls;
 	init_balls(balls);
 
 	// Availability queue
-	queue_t available_queue[num_notes];
+	queue_t[num_notes] available_queue;
 	init_queue(available_queue);
 
 	for(int i = 0; i < atoi(iters); i++){
@@ -361,10 +373,10 @@ int main(){
 				if available != -1:
 					balls[note][2*available].dy = dy_new;
 					balls[note][2*available].scored = 0;
-					balls[note][2*available].id = sprite_id[6*note + 2*available];
+					balls[note][2*available].id = sprite_ids[6*note + 2*available];
 					balls[note][2*available + 1].dy = dy_new;
 					balls[note][2*available + 1].scored = 0;
-					balls[note][2*available].id = sprite_id[6*note + 2*available + 1];
+					balls[note][2*available].id = sprite_ids[6*note + 2*available + 1];
 			}
 
 		}
@@ -379,13 +391,9 @@ int main(){
 		send_sprite_positions(&zylo_send_data);
 
 		game_counter++;
-
 	}
-
-}
-	
-	
-	
+*/
+		
 	printf("VGA BALL Userspace program terminating\n");
 	return 0;
 }

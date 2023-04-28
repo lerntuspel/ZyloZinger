@@ -89,11 +89,11 @@ int num_notes = 4;
 int size = 3;
 
 // x coordinates of 4 falling notes.
-x_notes = {10, 42, 100, 132, 200, 232, 300, 332};
+int x_notes[8] = {10, 42, 100, 132, 200, 232, 300, 332};
 
 // Initial Positions of the sprites {x_coordinate, y_coordinate, sprite_id}
 
-int[64][2] pos_init = {
+int pos_init[64][3] = {
 
 	{10, 10, 0}, // Note I 1a
 	{42, 10, 0}, // Note I 2a
@@ -168,11 +168,11 @@ int[64][2] pos_init = {
 	{0,0,0},
 	{0,0,0},
 	{0,0,0}
-}
+};
 
 // Relevant sprite ids
 
-int[40] sprite_ids = {
+int sprite_ids[40] = {
 
 //	Sprite ID	Sprite Name
 
@@ -222,7 +222,7 @@ int[40] sprite_ids = {
 	32, 		// 8
 	33, 		// 9
 
-}
+};
 
 
 
