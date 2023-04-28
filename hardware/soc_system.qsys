@@ -9,20 +9,17 @@
    categories="System" />
  <parameter name="bonusData"><![CDATA[bonusData 
 {
-   element VGA_zylo_array_0
-   {
-      datum _sortIndex
-      {
-         value = "10";
-         type = "int";
-      }
-   }
    element aud_0
    {
       datum _sortIndex
       {
          value = "3";
          type = "int";
+      }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
       }
    }
    element aud_0.avalon_slave_0
@@ -48,6 +45,11 @@
          value = "2";
          type = "int";
       }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
+      }
    }
    element clk_0
    {
@@ -55,6 +57,11 @@
       {
          value = "0";
          type = "int";
+      }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
       }
    }
    element goertzel_0
@@ -64,6 +71,11 @@
          value = "5";
          type = "int";
       }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
+      }
    }
    element goertzel_1
    {
@@ -71,6 +83,11 @@
       {
          value = "6";
          type = "int";
+      }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
       }
    }
    element goertzel_2
@@ -80,6 +97,11 @@
          value = "7";
          type = "int";
       }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
+      }
    }
    element goertzel_3
    {
@@ -87,6 +109,11 @@
       {
          value = "8";
          type = "int";
+      }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
       }
    }
    element goertzel_split_0
@@ -96,6 +123,11 @@
          value = "9";
          type = "int";
       }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
+      }
    }
    element hps_0
    {
@@ -103,6 +135,11 @@
       {
          value = "1";
          type = "int";
+      }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
       }
    }
    element iir_detector_0
@@ -112,13 +149,10 @@
          value = "4";
          type = "int";
       }
-   }
-   element soc_system
-   {
-      datum _originalDeviceFamily
+      datum sopceditor_expanded
       {
-         value = "Cyclone V";
-         type = "String";
+         value = "1";
+         type = "boolean";
       }
    }
    element soc_system
@@ -351,6 +385,30 @@
       {
          value = "Cyclone V";
          type = "String";
+      }
+   }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
+   element vga_zylo_0
+   {
+      datum _sortIndex
+      {
+         value = "10";
+         type = "int";
       }
    }
 }
@@ -367,7 +425,7 @@
  <parameter name="hideFromIPCatalog" value="false" />
  <parameter name="lockedInterfaceDefinition" value="" />
  <parameter name="maxAdditionalLatency" value="1" />
- <parameter name="projectName" value="soc_system.qpf" />
+ <parameter name="projectName" value="" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="0" />
  <parameter name="testBenchDutName" value="" />
@@ -387,12 +445,7 @@
  <interface name="hps_ddr3" internal="hps_0.memory" type="conduit" dir="end" />
  <interface name="key" internal="aud_0.key" type="conduit" dir="end" />
  <interface name="reset" internal="clk_0.clk_in_reset" type="reset" dir="end" />
- <interface name="vga" internal="VGA_zylo_array_0.vga" type="conduit" dir="end" />
- <module
-   name="VGA_zylo_array_0"
-   kind="VGA_zylo_array"
-   version="1.1"
-   enabled="1" />
+ <interface name="vga" internal="vga_zylo_0.vga" type="conduit" dir="end" />
  <module name="aud_0" kind="aud" version="1.0" enabled="1">
   <parameter name="readOutSize" value="65535" />
  </module>
@@ -957,6 +1010,7 @@
  <module name="iir_detector_0" kind="iir_detector" version="1.0" enabled="1">
   <parameter name="ARR_WIDTH" value="16" />
  </module>
+ <module name="vga_zylo_0" kind="vga_zylo" version="1.2" enabled="1" />
  <connection
    kind="avalon"
    version="21.1"
@@ -970,7 +1024,7 @@
    kind="avalon"
    version="21.1"
    start="hps_0.h2f_lw_axi_master"
-   end="VGA_zylo_array_0.avalon_slave_0">
+   end="vga_zylo_0.avalon_slave_0">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x0000" />
   <parameter name="defaultConnection" value="false" />
@@ -991,11 +1045,7 @@
    version="21.1"
    start="clk_0.clk"
    end="goertzel_split_0.clock" />
- <connection
-   kind="clock"
-   version="21.1"
-   start="clk_0.clk"
-   end="VGA_zylo_array_0.clock" />
+ <connection kind="clock" version="21.1" start="clk_0.clk" end="vga_zylo_0.clock" />
  <connection
    kind="clock"
    version="21.1"
@@ -1167,7 +1217,7 @@
    kind="reset"
    version="21.1"
    start="clk_0.clk_reset"
-   end="VGA_zylo_array_0.reset" />
+   end="vga_zylo_0.reset" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
  <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />

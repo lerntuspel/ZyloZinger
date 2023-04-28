@@ -47,7 +47,7 @@ module vga_zylo(
     twoportbram #(
         .RAM_WIDTH(10),
         .RAM_ADDR_BITS(6),
-        .RAM_WORDS(6'h3f)
+        .RAM_WORDS(7'h40)
     ) sprites_x (
         .clk(clk),
         .ra(sprites_read_address), 
@@ -59,7 +59,7 @@ module vga_zylo(
     twoportbram #(
         .RAM_WIDTH(10),
         .RAM_ADDR_BITS(6),
-        .RAM_WORDS(6'h3f)
+        .RAM_WORDS(7'h40)
     ) sprites_y (
         .clk(clk),
         .ra(sprites_read_address), 
@@ -71,7 +71,7 @@ module vga_zylo(
     twoportbram #(
         .RAM_WIDTH(6),
         .RAM_ADDR_BITS(6),
-        .RAM_WORDS(6'h3f)
+        .RAM_WORDS(7'h40)
     ) sprites_n (
         .clk(clk),
         .ra(sprites_read_address), 
@@ -87,7 +87,7 @@ module vga_zylo(
                                 // | display | item   | submenu # |
     logic [31:0]        gamedata;
     logic               reset_sw;
-    
+
     always_ff @(posedge clk) begin
         if (reset) begin
             score       <=  16'h0;
@@ -121,7 +121,11 @@ module vga_zylo(
 
     logic [9:0]         line;
     logic [31:0][23:0]  pattern;
-    assign line = vcount - y;
+    assign line = (vcount >= y) ? (vcount - y) : 10'd32;
+    // logic [5:0]         length;
+    // logic [5:0]         n;
+    // sprites in sprites.sv are ordered from least prioety to highest priorety
+
 	sprites sprites0(
         .n_sprite (n),
         .clk (clk),
@@ -130,217 +134,111 @@ module vga_zylo(
         );
 
 
+    // logic [9:0] x, y;
+    logic [639:0][23:0] buf_e;
+    logic [639:0][23:0] buf_o;
     logic [3:0] stage;
+    logic [8:0] sprite_index;
     logic [5:0] pixel;
-    logic [9:0] xposition;  //on written buffer
-	logic [23:0] buf_o_in, buf_e_in;
-	logic [23:0] buf_o_out, buf_e_out;
-    logic [23:0] buf_o1_in, buf_e1_in;
-    logic [23:0] buf_o1_out, buf_e1_out;
-    logic [23:0] buf_o2_in, buf_e2_in;
-    logic [23:0] buf_o2_out, buf_e2_out;
+    logic [9:0] xposition;
     logic done;
+    assign sprites_read_address = sprite_index[5:0];
     assign xposition = x + {4'd0, pixel};
-
-    logic buf_o_w;
-    logic buf_e_w;
-	logic [9:0] xposition1,xposition2,xposition3,xposition4;  //on written buffer
-	//4 line cycle
-	//	o1    e1    o2    e2 
-	//0 edit  idle  flush print
-	//1	print edit  idle  flush
-	//2	flush print edit  idle
-	//3	idle  flush print edit
-	always_comb begin
-		case (vcount[1:0])
-		    4'd0: begin
-		    	buf_o1_in = buf_o_in;
-		        buf_o2_in = 24'h000000;
-		        buf_e1_in = 24'h000000;
-		        buf_e2_in = 24'h000000;
-		        buf_e_out = buf_e2_out;
-		        buf_o_out = buf_o1_out;
-		        xposition1 = xposition;
-		        xposition2 = hcount[10:1];
-		        xposition3 = hcount[10:1];
-		        xposition4 = hcount[10:1];
-		    end
-		    4'd1: begin
-		        buf_o1_in = 24'h000000;
-		        buf_o2_in = 24'h000000;
-		        buf_e1_in = buf_e_in;
-		        buf_e2_in = 24'h000000;
-		        buf_e_out = buf_e1_out;
-		        buf_o_out = buf_o1_out;
-		        xposition1 = hcount[10:1];
-		        xposition2 = xposition;
-		        xposition3 = hcount[10:1];
-		        xposition4 = hcount[10:1];
-		    end
-		    4'd2: begin
-		        
-		        buf_o1_in = 24'h000000;
-		        buf_o2_in = buf_o_in;
-		        buf_e1_in = 24'h000000;
-		        buf_e2_in = 24'h000000;
-		        buf_e_out = buf_e1_out;
-		        buf_o_out = buf_o2_out;
-		        xposition1 = hcount[10:1];
-		        xposition2 = hcount[10:1];
-		        xposition3 = xposition;
-		        xposition4 = hcount[10:1];
-		    end
-		    4'd3: begin
-		        buf_o1_in = 24'h000000;
-		        buf_o2_in = 24'h000000;
-		        buf_e1_in = 24'h000000;
-		        buf_e2_in = buf_e_in;
-		        buf_o_out = buf_o2_out;
-		        buf_e_out = buf_e2_out;
-			    xposition1 = hcount[10:1];
-		        xposition2 = hcount[10:1];
-		        xposition3 = hcount[10:1];
-			    xposition4 = xposition;
-		    end
-		endcase
-	end
-	
-	
-    twoportbram #(
-        .RAM_WIDTH(24),
-        .RAM_ADDR_BITS(10),
-        .RAM_WORDS(10'h280)
-    ) buf_o1_bram (
-        .clk(clk),
-        .ra(hcount[10:1]), 
-        .wa(xposition1),
-        .write(buf_o_w),
-        .data_in(buf_o1_in),
-        .data_out(buf_o1_out)
-    );
-    twoportbram #(
-        .RAM_WIDTH(24),
-        .RAM_ADDR_BITS(10),
-        .RAM_WORDS(10'h280)
-    ) buf_e1_bram (
-        .clk(clk),
-        .ra(hcount[10:1]), 
-        .wa(xposition2),
-        .write(buf_e_w),
-        .data_in(buf_e1_in),
-        .data_out(buf_e1_out)
-    );
-    twoportbram #(
-        .RAM_WIDTH(24),
-        .RAM_ADDR_BITS(10),
-        .RAM_WORDS(10'h280)
-    ) buf_o2_bram (
-        .clk(clk),
-        .ra(hcount[10:1]), 
-        .wa(xposition3),
-        .write(buf_o_w),
-        .data_in(buf_o2_in),
-        .data_out(buf_o2_out)
-    );
-    twoportbram #(
-        .RAM_WIDTH(24),
-        .RAM_ADDR_BITS(10),
-        .RAM_WORDS(10'h280)
-    ) buf_e2_bram (
-        .clk(clk),
-        .ra(hcount[10:1]), 
-        .wa(xposition4),
-        .write(buf_e_w),
-        .data_in(buf_e2_in),
-        .data_out(buf_e2_out)
-    );
-
-
-
     //paint basic background
     logic [23:0] bg_color;
-    logic [23:0] buf_bg_color;
     always_ff @(posedge clk) begin
-        if      (vcount == 10'd0)   bg_color <= 24'h223399;
-        else if (vcount == 10'd80)  bg_color <= 24'h2244AA;
-        else if (vcount == 10'd140) bg_color <= 24'h2255BB;
-        else if (vcount == 10'd190) bg_color <= 24'h2266CC;
-        else if (vcount == 10'd230) bg_color <= 24'h2277DD;
-        else if (vcount == 10'd265) bg_color <= 24'h2299EE;
-        else if (vcount == 10'd295) bg_color <= 24'h22BBFF;
-        else if (vcount == 10'd320) bg_color <= 24'h226600;
+        if      (vcount == 10'd0)   bg_color <= 24'h203090;
+        else if (vcount == 10'd80)  bg_color <= 24'h2040A0;
+        else if (vcount == 10'd140) bg_color <= 24'h2050B0;
+        else if (vcount == 10'd190) bg_color <= 24'h2060C0;
+        else if (vcount == 10'd230) bg_color <= 24'h2070D0;
+        else if (vcount == 10'd265) bg_color <= 24'h2090E0;
+        else if (vcount == 10'd295) bg_color <= 24'h20B0F0;
+        else if (vcount == 10'd320) bg_color <= 24'h206000;
     end
 
     always_ff @(posedge clk) begin
         if(reset) begin
+            buf_e <= {640{24'hdd1122}}; // some red
+            buf_o <= {640{24'hdd1122}}; // some red
             stage <= 0;
-            sprites_read_address <= 0;
+            sprite_index <= 0;
             pixel <= 0;
             done <= 1;
         end else begin
+            // create new "canvas" if hcount is over 640 and vcount has just changed
+            // flush row to background color once finished printing line
+            // draw background
             if (vcount[0]) begin     // output buffer_odd, edit buffer_even
-                buf_o_w <= 0;
-                buf_e_w <= 1;
-            end else begin           // output buffer_even, edit buffer_odd
-                buf_o_w <= 1;
-                buf_e_w <= 0;
+                if ((hcount[10:1] > 640) && (vcount < 10'd480)) begin
+                    for (int i = 0; i < 480; i++)
+                        buf_o[i] <= bg_color;
+                    for (int i = 480; i < 640; i++)
+                        buf_o[i] <= 24'h5f5f5f;
+                end
+            end else begin         // output buffer_even, edit buffer_odd 
+                if ((hcount[10:1] > 640) && (vcount < 10'd480)) begin
+                    for (int i = 0; i < 480; i++)
+                        buf_e[i] <= bg_color;
+                    for (int i = 480; i < 640; i++)
+                        buf_e[i] <= 24'h5f5f5f;
+                end
             end
 
             if (hcount == 11'd1) begin
-                done <= 0;                  // 0/1
-                stage <= 0;                 // 0-2
-                sprites_read_address <= 0;  // 0-63
-                pixel <= 0;                 // 0-31
+                done <= 0;  // 0/1
+                stage <= 0; // 0-2
+                sprite_index <= 0; // 0-127
+                pixel <= 0; // 0-31
             end
-
             if(~done)begin
                 case(stage)
                     4'd0 : begin
-                        sprites_read_address <= 6'd0;
+                        // n <= sprites_n[sprites_read_address];
+                        // x <= sprites_x[sprites_read_address];
+                        // y <= sprites_y[sprites_read_address];
+                        // n, x, y ready next clk cycle
                         pixel <= 0;
+                        // if (vcount >= 10'd479) // if vcount is off the screen -> new screen
+                        //     line <= 10'd32;		// end early
+                        // else
+                        //     line <= vcount - sprites_y[sprite_index];
                         stage <= stage + 4'd1;
-                        // x,y,n usable in following clock cycle 
                     end
-                    4'd1 : begin    //skips a sprite or check for end of sprite addresses 
-                        if ((n == 0) || (vcount - y >= 32)) begin   // target sprite not in this line
-                            pixel <= 6'd0;                          // reset pixel
-                            stage <= 4'd0;                          // reset stage
-                            if (sprites_read_address < 9'd32) // check if there are more sprites to check (existance of 32 potential sprites)
-                                sprites_read_address <= sprites_read_address + 8'd1;
+                    4'd1 : begin
+                        if ((n == 0) || (line >= 32)) begin // not in this line orr empty sprite
+                            pixel <= 6'd0;
+                            stage <= 4'd0;
+                            if (sprite_index < 9'd63) 	// check if there are more sprites to check (existance of 32 potential sprites)
+                                sprite_index <= sprite_index + 8'd1;
                             else
                                 done <= 1;
-                        end else begin // move to next stage if is in line
+                        end else begin
                             stage <= stage + 4'd1;
                         end
-                        // line ready
                     end
                     4'd2 : begin
-                        if (vcount[0]) begin        // output buffer_odd, edit buffer_even
-                            if (xposition < 10'd640) begin
-                                if (pattern[pixel] == 24'h0) 
-                                    buf_e_in <= bg_color;
-                                else
-                                    buf_e_in <= pattern[pixel];
+                        if (vcount[0]) begin     	// output buffer_odd, edit buffer_even
+                            if (pattern[pixel] != 24'h0) begin
+                                if (xposition < 10'd640)
+                                    buf_e[xposition] <= pattern[pixel];
                             end
-                        end else begin              // output buffer_even, edit buffer_odd
-                            if (xposition < 10'd640) begin
-                                if (pattern[pixel] == 24'h0) 
-                                    buf_o_in <= bg_color;
-                                else
-                                    buf_o_in <= pattern[pixel];
+                        end else begin             	// output buffer_even, edit buffer_odd
+                            if (pattern[pixel] != 24'h0) begin
+                                if (xposition < 10'd640)
+                                    buf_o[xposition] <= pattern[pixel];
                             end
                         end
-						// repeat writing stage pixel is 30 or under
+							// repeat writing stage pixel is 0-30 or under
                         if (pixel < 6'd31) begin
                             pixel <= pixel + 1;
                             stage <= stage;
-                        // or 
-                        end else begin		//WHEN pixels are done writing to buf set stage to 0
+                        end else begin 			// on pixel == 31 (32 pixel)
                             pixel <= 6'd0;
                             stage <= 4'd0;
-                            if (sprites_read_address < 9'd32)
-                                sprites_read_address <= sprites_read_address + 8'd1;
-                            else
+                            if (sprite_index < 9'd63) 	// repeat on sprite number 0-62
+                                sprite_index <= sprite_index + 8'd1;
+                            else                      	// stop on 63
                                 done <= 1;
                         end
                     end
@@ -352,30 +250,25 @@ module vga_zylo(
 
     always_comb begin
         {VGA_R, VGA_G, VGA_B} = {bg_color};
-        if (VGA_BLANK_n )
+        if (VGA_BLANK_n ) begin
             if (vcount < 10'd480) begin
                 if (vcount[0]) begin    // output buffer_odd, edit buffer_even
-                    if ((buf_o_out != bg_color) && (buf_o_out != 24'h0))
-                        {VGA_R, VGA_G, VGA_B} = buf_o_out;
-                    else 
-                        {VGA_R, VGA_G, VGA_B} = {bg_color};
+                    {VGA_R, VGA_G, VGA_B} = buf_o[hcount[10:1]][23:0];
                 end else begin            // output buffer_even, edit buffer_odd
-                    if ((buf_e_out != bg_color) && (buf_e_out != 24'h0))
-                        {VGA_R, VGA_G, VGA_B} = buf_e_out;
-                    else 
-                        {VGA_R, VGA_G, VGA_B} = {bg_color};
+                    {VGA_R, VGA_G, VGA_B} = buf_e[hcount[10:1]][23:0];
                 end
             end
+        end
     end
-    
+
 
 endmodule
 
 module vga_counters(
-    input logic              clk50, reset,
+    input logic             clk50, reset,
     output logic [10:0]     hcount,  // hcount[10:1] is pixel column
     output logic [9:0]      vcount,  // vcount[9:0] is pixel row
-    output logic              VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_n, VGA_SYNC_n);
+    output logic            VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_n, VGA_SYNC_n);
 
 /*
  * 640 X 480 VGA timing for a 50 MHz clock: one pixel every other cycle
@@ -450,4 +343,3 @@ module vga_counters(
     assign VGA_CLK = hcount[0]; // 25 MHz clock: rising edge sensitive
 
 endmodule
-
