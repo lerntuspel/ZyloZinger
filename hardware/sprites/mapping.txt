@@ -1,0 +1,11 @@
+0 -> 0
+hffddb6 -> 1 //light orange
+hff881f -> 2 //dark orange
+hffceb6 -> 3 //light pink
+hcc7a7a -> 4 //dark pink
+hb6efff -> 5 //light blue
+h5bc4de -> 6 //dark blue
+hdab6ff -> 7 //light purple
+h7d6ba8 -> 8 //dark purple
+hffb6b6 -> 9 //score pink
+hb6ffc3 -> a //letter green

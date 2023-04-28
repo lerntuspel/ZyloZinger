@@ -102,13 +102,22 @@ int main()
 
 	sprite *sprites = NULL;	
 	int r = rand() % 20;
-	sprites = calloc(32, sizeof(*sprites));
-	for (int i = 0; i < 32; i++) {
+	sprites = calloc(64, sizeof(*sprites));
+	for (int i = 0; i < 4; i++) {
 		sprites[i].x = rand() % 639; 
 		sprites[i].y = rand() % 479;
 		sprites[i].dx = 1;  
 		sprites[i].dy = 1; 
-		sprites[i].id = 1;
+		sprites[i].id = i+1;
+		sprites[i].index = i;
+	}
+
+	for (int i = 4; i < 64; i++) {
+		sprites[i].x = rand() % 639; 
+		sprites[i].y = rand() % 479;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 0; 
+		sprites[i].id = 0;
 		sprites[i].index = i;
 	}
 	// /mem mem_obj = {.data = 0, .address = 0, .limit = 48000, .mode = 1};
@@ -148,7 +157,7 @@ int main()
 		for (int i = 0; i < 32; i++) {
 			updateBall(&sprites[i]);
 		}
-		usleep(1000);
+		usleep(10000);
 	}
 	free (sprites);
 

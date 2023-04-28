@@ -120,7 +120,7 @@ module vga_zylo(
     end
 
     logic [9:0]         line;
-    logic [31:0][23:0]  pattern;
+    logic [3:0]         pattern;
     assign line = (vcount >= y) ? (vcount - y) : 10'd32;
     // logic [5:0]         length;
     // logic [5:0]         n;
@@ -129,14 +129,15 @@ module vga_zylo(
 	sprites sprites0(
         .n_sprite (n),
         .clk (clk),
+        .pixel (pixel),
         .line (line),
-        .pattern (pattern)
+        .color_code (pattern)
         );
 
 
     // logic [9:0] x, y;
-    logic [639:0][23:0] buf_e;
-    logic [639:0][23:0] buf_o;
+    logic [639:0][3:0] buf_e;
+    logic [639:0][3:0] buf_o;
     logic [3:0] stage;
     logic [8:0] sprite_index;
     logic [5:0] pixel;
@@ -145,22 +146,19 @@ module vga_zylo(
     assign sprites_read_address = sprite_index[5:0];
     assign xposition = x + {4'd0, pixel};
     //paint basic background
-    logic [23:0] bg_color;
+    logic [3:0] bg_color;
     always_ff @(posedge clk) begin
-        if      (vcount == 10'd0)   bg_color <= 24'h203090;
-        else if (vcount == 10'd80)  bg_color <= 24'h2040A0;
-        else if (vcount == 10'd140) bg_color <= 24'h2050B0;
-        else if (vcount == 10'd190) bg_color <= 24'h2060C0;
-        else if (vcount == 10'd230) bg_color <= 24'h2070D0;
-        else if (vcount == 10'd265) bg_color <= 24'h2090E0;
-        else if (vcount == 10'd295) bg_color <= 24'h20B0F0;
-        else if (vcount == 10'd320) bg_color <= 24'h206000;
+        if      (vcount == 10'd0)   bg_color <= 4'hb;
+        else if (vcount == 10'd80)  bg_color <= 4'hc;
+        else if (vcount == 10'd190) bg_color <= 4'hd;
+        else if (vcount == 10'd265) bg_color <= 4'he;
+        else if (vcount == 10'd320) bg_color <= 4'hf;
     end
 
     always_ff @(posedge clk) begin
         if(reset) begin
-            buf_e <= {640{24'hdd1122}}; // some red
-            buf_o <= {640{24'hdd1122}}; // some red
+            buf_e <= {640{4'hb}}; // some red
+            buf_o <= {640{4'hb}}; // some red
             stage <= 0;
             sprite_index <= 0;
             pixel <= 0;
@@ -174,14 +172,14 @@ module vga_zylo(
                     for (int i = 0; i < 480; i++)
                         buf_o[i] <= bg_color;
                     for (int i = 480; i < 640; i++)
-                        buf_o[i] <= 24'h5f5f5f;
+                        buf_o[i] <= 4'h0;
                 end
             end else begin         // output buffer_even, edit buffer_odd 
                 if ((hcount[10:1] > 640) && (vcount < 10'd480)) begin
                     for (int i = 0; i < 480; i++)
                         buf_e[i] <= bg_color;
                     for (int i = 480; i < 640; i++)
-                        buf_e[i] <= 24'h5f5f5f;
+                        buf_e[i] <= 4'h0;
                 end
             end
 
@@ -219,14 +217,14 @@ module vga_zylo(
                     end
                     4'd2 : begin
                         if (vcount[0]) begin     	// output buffer_odd, edit buffer_even
-                            if (pattern[pixel] != 24'h0) begin
+                            if (pattern != 4'h0) begin
                                 if (xposition < 10'd640)
-                                    buf_e[xposition] <= pattern[pixel];
+                                    buf_e[xposition] <= pattern;
                             end
                         end else begin             	// output buffer_even, edit buffer_odd
-                            if (pattern[pixel] != 24'h0) begin
+                            if (pattern != 4'h0) begin
                                 if (xposition < 10'd640)
-                                    buf_o[xposition] <= pattern[pixel];
+                                    buf_o[xposition] <= pattern;
                             end
                         end
 							// repeat writing stage pixel is 0-30 or under
@@ -247,17 +245,19 @@ module vga_zylo(
             end
         end
     end
+    //logic [3:0] color_code_out;
+    logic [23:0] color_out;
+	sprite_color_pallete colors(
+		.color_code_o (buf_o[hcount[10:1]][3:0]),
+        .color_code_e (buf_e[hcount[10:1]][3:0]),
+        .select (vcount[0]),
+		.color (color_out)	
+	);
 
     always_comb begin
-        {VGA_R, VGA_G, VGA_B} = {bg_color};
-        if (VGA_BLANK_n ) begin
-            if (vcount < 10'd480) begin
-                if (vcount[0]) begin    // output buffer_odd, edit buffer_even
-                    {VGA_R, VGA_G, VGA_B} = buf_o[hcount[10:1]][23:0];
-                end else begin            // output buffer_even, edit buffer_odd
-                    {VGA_R, VGA_G, VGA_B} = buf_e[hcount[10:1]][23:0];
-                end
-            end
+        {VGA_R, VGA_G, VGA_B} = 24'h0;
+        if (VGA_BLANK_n) begin
+            if (vcount < 10'd480) {VGA_R, VGA_G, VGA_B} = color_out;
         end
     end
 
