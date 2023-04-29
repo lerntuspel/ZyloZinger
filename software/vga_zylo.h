@@ -17,7 +17,7 @@ typedef struct {
 } vga_zylo_arg_t;
 
 typedef struct {
-	int x, y, dx, dy, id, index;
+	int x, y, dx, dy, id, baseid, index;
 } sprite;
 #define VGA_ZYLO_MAGIC 'q'
 

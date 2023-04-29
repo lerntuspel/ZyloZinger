@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #define X_MAX 640 
-#define Y_MAX 480
+#define Y_MAX 479
 
 int vga_zylo_fd;
 int aud_fd;
@@ -86,11 +86,17 @@ void updateBall(sprite *obj) {
 	obj->x += obj->dx;
 	obj->y += obj->dy;
 	
-	if (obj->x < 1 || obj->x >= X_MAX)
+	if (obj->x < 0 || obj->x >= X_MAX)
 		obj->dx = -obj->dx;
 
-	if (obj->y < 1 || obj->y >= Y_MAX)
+	if (obj->y < 0) {
 		obj->dy = -obj->dy;
+		obj->id = obj->baseid;
+	}
+	if (obj->y >= Y_MAX) {
+		obj->dy = -obj->dy;
+		obj->id = 0;
+	}
 }
 
 int main()
@@ -103,21 +109,71 @@ int main()
 	sprite *sprites = NULL;	
 	int r = rand() % 20;
 	sprites = calloc(64, sizeof(*sprites));
-	for (int i = 0; i < 4; i++) {
-		sprites[i].x = rand() % 639; 
-		sprites[i].y = rand() % 479;
-		sprites[i].dx = 1;  
-		sprites[i].dy = 1; 
+	//numbers
+	for (int i = 0; i < 10; i++) {
+		sprites[i].x = 64*i; 
+		sprites[i].y = 100;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 0; 
+		sprites[i].baseid = i+1;
+		sprites[i].id = sprites[i].baseid;
+		sprites[i].index = i;
+	}
+	// letters
+	for (int i = 10; i < 17; i++) {
+		sprites[i].x = 64+64*(i-10); 
+		sprites[i].y = 200;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 0; 
 		sprites[i].id = i+1;
 		sprites[i].index = i;
 	}
+	//note blocks
+	for (int i = 17; i < 19; i++) {
+		sprites[i].x = 32+32*(i-17); 
+		sprites[i].y = 300;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 1; 
+		sprites[i].baseid = i+1;
+		sprites[i].id = sprites[i].baseid;
+		sprites[i].index = i;
+	}
+	for (int i = 19; i < 21; i++) {
+		sprites[i].x = (32 + 96) + 32*(i-19); 
+		sprites[i].y = 300;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 1; 
+		sprites[i].baseid = i+1;
+		sprites[i].id = sprites[i].baseid;
+		sprites[i].index = i;
+	}
+	for (int i = 21; i < 23; i++) {
+		sprites[i].x = (32 + 96 + 96) + 32*(i-21);
+		sprites[i].y = 300;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 1; 
+		sprites[i].baseid = i+1;
+		sprites[i].id = sprites[i].baseid;
+		sprites[i].index = i;
+	}
+	for (int i = 23; i < 25; i++) {
+		sprites[i].x = (32 + 96 + 96 + 96) + 32*(i-23);
+		sprites[i].y = 300;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 1; 
+		sprites[i].baseid = i+1;
+		sprites[i].id = sprites[i].baseid;
+		sprites[i].index = i;
+	}
 
-	for (int i = 4; i < 64; i++) {
-		sprites[i].x = rand() % 639; 
-		sprites[i].y = rand() % 479;
+
+	for (int i = 25; i < 64; i++) {
+		sprites[i].x = 0; 
+		sprites[i].y = 0;
 		sprites[i].dx = 0;  
 		sprites[i].dy = 0; 
-		sprites[i].id = 0;
+		sprites[i].baseid = 0;
+		sprites[i].id = sprites[i].baseid;
 		sprites[i].index = i;
 	}
 	// /mem mem_obj = {.data = 0, .address = 0, .limit = 48000, .mode = 1};
@@ -144,17 +200,17 @@ int main()
  	
 	while (1) {
 		//package the sprites together	
-		for (int i = 0; i < 32; i++) {
+		for (int i = 0; i < 64; i++) {
 			vzdt.data[i] = (sprites[i].index<<26) + (sprites[i].id<<20) + (sprites[i].y<<10) + (sprites[i].x<<0);
 		}
-		printf("%08x, %08x, %08x, %08x\n", vzdt.data[0], vzdt.data[1], vzdt.data[2], vzdt.data[3]);
+		// printf("%08x, %08x, %08x, %08x\n", vzdt.data[0], vzdt.data[1], vzdt.data[2], vzdt.data[3]);
 		
 		//send package to hardware
 		send_sprite_positions(&vzdt);
 
 		//update spirtes on software side
 		
-		for (int i = 0; i < 32; i++) {
+		for (int i = 0; i < 64; i++) {
 			updateBall(&sprites[i]);
 		}
 		usleep(10000);

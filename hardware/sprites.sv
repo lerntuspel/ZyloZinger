@@ -9,53 +9,270 @@ module sprites(
 
 	assign spr_rom_addr = (line<<5) + pixel;
 	
-	logic [3:0] spr_rom_data [24:0];
-	// sprites indevidually stored in bram
+	logic [3:0] spr_rom_data [31:0];
+	// sprites indevidually stored in roms
+
+	// numbers
 	rom_sync #(
         .WIDTH(4),
-        .DEPTH(1024),
-        .INIT_F("0.mem")
-    ) num_0 (
-        .addr(spr_rom_addr),
-        .data(spr_rom_data[0])
-    );
-	rom_sync #(
-        .WIDTH(4),
-        .DEPTH(1024),
-        .INIT_F("1.txt")
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/1.mem")
     ) num_1 (
+	.clk(clk),
         .addr(spr_rom_addr),
-        .data(spr_rom_data[1])
+        .data(spr_rom_data[6'd1])
     );
 	rom_sync #(
         .WIDTH(4),
-        .DEPTH(1024),
-        .INIT_F("2.txt")
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/2.mem")
     ) num_2 (
+	.clk(clk),
         .addr(spr_rom_addr),
-        .data(spr_rom_data[2])
+        .data(spr_rom_data[6'd2])
     );
 	rom_sync #(
         .WIDTH(4),
-        .DEPTH(1024),
-        .INIT_F("3.txt")
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/3.mem")
     ) num_3 (
+	.clk(clk),
         .addr(spr_rom_addr),
-        .data(spr_rom_data[3])
+        .data(spr_rom_data[6'd3])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/4.txt")
+    ) num_4 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd4])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/5.txt")
+    ) num_5 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd5])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/6.txt")
+    ) num_6 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd6])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/7.txt")
+    ) num_7 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd7])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/8.txt")
+    ) num_8 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd8])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/9.txt")
+    ) num_9 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd9])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/0.mem")
+    ) num_10 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd10])
+    );
+
+	// Letters 
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/B.txt")
+    ) num_11 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd11])
     );
 	
-	/*
-	sprite_color_pallete colors(
-		.color_code (color_code),
-		.color (pixel_color)	
-	);
-	*/
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/C.txt")
+    ) num_12 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd12])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/E.txt")
+    ) num_13 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd13])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/M.txt")
+    ) num_14 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd14])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/O.txt")
+    ) num_15 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd15])
+    );
+	
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/R.txt")
+    ) num_16 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd16])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/S.txt")
+    ) num_17(
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd17])
+    );
+	// NOTE BLOCKS
+	rom_sync #( //blue
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/Blue-left.txt")
+    ) num_18 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd18])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/Blue-right.txt")
+    ) num_19 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd19])
+    );
+	rom_sync #( //orange
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/Orange-left.txt")
+    ) num_20 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd20])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/Orange-right.txt")
+    ) num_21 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd21])
+    );
+	rom_sync #( //pink
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/Pink-left.txt")
+    ) num_22 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd22])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/Pink-right.txt")
+    ) num_23 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd23])
+    );
+	rom_sync #(//purple
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/Purple-left.txt")
+    ) num_24 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd24])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/Purple-right.txt")
+    ) num_25 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd25])
+    );
 	always_comb begin
 		case (n_sprite)
-			6'd1 : color_code = spr_rom_data[5'd0];
-			6'd2 : color_code = spr_rom_data[5'd1];
-			6'd3 : color_code = spr_rom_data[5'd2];
-			6'd4 : color_code = spr_rom_data[5'd3];
+			// numbers
+			6'd1  : color_code = spr_rom_data[6'd1];  // 1
+			6'd2  : color_code = spr_rom_data[6'd2];  // 2 
+			6'd3  : color_code = spr_rom_data[6'd3];  // 3
+			6'd4  : color_code = spr_rom_data[6'd4];  // 4
+			6'd5  : color_code = spr_rom_data[6'd5];  // 5
+			6'd6  : color_code = spr_rom_data[6'd6];  // 6
+			6'd7  : color_code = spr_rom_data[6'd7];  // 7
+			6'd8  : color_code = spr_rom_data[6'd8];  // 8
+			6'd9  : color_code = spr_rom_data[6'd9];  // 9
+			6'd10 : color_code = spr_rom_data[6'd10]; // 10
+			// letters 
+			6'd11 : color_code = spr_rom_data[6'd11]; // B
+			6'd12 : color_code = spr_rom_data[6'd12]; // C
+			6'd13 : color_code = spr_rom_data[6'd13]; // E
+			6'd14 : color_code = spr_rom_data[6'd14]; // M
+			6'd15 : color_code = spr_rom_data[6'd15]; // O 
+			6'd16 : color_code = spr_rom_data[6'd16]; // R
+			6'd17 : color_code = spr_rom_data[6'd17]; // S
+			// notes
+			6'd18 : color_code = spr_rom_data[6'd18]; // blue l
+			6'd19 : color_code = spr_rom_data[6'd19]; // blue r
+			6'd20 : color_code = spr_rom_data[6'd20]; // orange l
+			6'd21 : color_code = spr_rom_data[6'd21]; // orange r
+			6'd22 : color_code = spr_rom_data[6'd22]; // pink l
+			6'd23 : color_code = spr_rom_data[6'd23]; // pink r
+			6'd24 : color_code = spr_rom_data[6'd24]; // purple l
+			6'd25 : color_code = spr_rom_data[6'd25]; // purple r
 			default : begin
 				color_code <= 4'h0;
 			end
@@ -98,7 +315,7 @@ endmodule
 
 module rom_sync #(
     parameter WIDTH=4,
-    parameter DEPTH=1024,
+    parameter WORDS=1024,
     parameter INIT_F="",
     parameter ADDRW=10
     ) (
@@ -107,7 +324,7 @@ module rom_sync #(
     output     logic [WIDTH-1:0] data
     );
 
-    logic [WIDTH-1:0] memory [DEPTH];
+    logic [WIDTH-1:0] memory [WORDS];
 
     initial begin
         if (INIT_F != 0) begin
