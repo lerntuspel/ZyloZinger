@@ -15,7 +15,9 @@ default: module game
 hello: hello.c
 	gcc -o hello hello.c
 test: test.c
-	gcc -o test test.c
+	gcc -o test test.c interfaces.c interfaces.h
+test2: test2.c
+	gcc -o test2 test2.c interfaces.c interfaces.h
 game: Game_Logic.c
 	gcc -o zylo Game_Logic.c
 module:
@@ -25,7 +27,7 @@ clean:
 	${MAKE} -C ${KERNEL_SOURCE} SUBDIRS=${PWD} clean
 	${RM} hello test
 
-TARFILES = Makefile README vga_zylo.h vga_zylo.c hello.c aud.c aud.h test.c
+TARFILES = Makefile README vga_zylo.h vga_zylo.c aud.c aud.h interfaces.c interfaces.h test.c hello.c 
 TARFILE = lab3-sw.tar.gz
 .PHONY : tar
 tar : $(TARFILE)

@@ -178,7 +178,7 @@ module sprites(
     ) num_18 (
 	.clk(clk),
         .addr(spr_rom_addr),
-        .data(spr_rom_data[6'd18])
+        .data(spr_rom_data[6'd20])
     );
 	rom_sync #(
         .WIDTH(4),
@@ -187,7 +187,7 @@ module sprites(
     ) num_19 (
 	.clk(clk),
         .addr(spr_rom_addr),
-        .data(spr_rom_data[6'd19])
+        .data(spr_rom_data[6'd21])
     );
 	rom_sync #( //orange
         .WIDTH(4),
@@ -196,7 +196,7 @@ module sprites(
     ) num_20 (
 	.clk(clk),
         .addr(spr_rom_addr),
-        .data(spr_rom_data[6'd20])
+        .data(spr_rom_data[6'd18])
     );
 	rom_sync #(
         .WIDTH(4),
@@ -205,7 +205,7 @@ module sprites(
     ) num_21 (
 	.clk(clk),
         .addr(spr_rom_addr),
-        .data(spr_rom_data[6'd21])
+        .data(spr_rom_data[6'd19])
     );
 	rom_sync #( //pink
         .WIDTH(4),
@@ -265,10 +265,10 @@ module sprites(
 			6'd16 : color_code = spr_rom_data[6'd16]; // R
 			6'd17 : color_code = spr_rom_data[6'd17]; // S
 			// notes
-			6'd18 : color_code = spr_rom_data[6'd18]; // blue l
-			6'd19 : color_code = spr_rom_data[6'd19]; // blue r
-			6'd20 : color_code = spr_rom_data[6'd20]; // orange l
-			6'd21 : color_code = spr_rom_data[6'd21]; // orange r
+			6'd18 : color_code = spr_rom_data[6'd18]; // orange l
+			6'd19 : color_code = spr_rom_data[6'd19]; // orange r
+			6'd20 : color_code = spr_rom_data[6'd20]; // blue l
+			6'd21 : color_code = spr_rom_data[6'd21]; // blue r
 			6'd22 : color_code = spr_rom_data[6'd22]; // pink l
 			6'd23 : color_code = spr_rom_data[6'd23]; // pink r
 			6'd24 : color_code = spr_rom_data[6'd24]; // purple l
@@ -291,7 +291,7 @@ module sprite_color_pallete(
 	always_comb begin
 		case(color_code)
 			//sprite colors
-			4'h0 : color = 24'h000000;
+			4'h0 : color = 24'h222222;
 			4'h1 : color = 24'hffddb6;
 			4'h2 : color = 24'hff881f;
 			4'h3 : color = 24'hffceb6;
@@ -307,8 +307,8 @@ module sprite_color_pallete(
 			4'hc : color = 24'h2040A0;
 			4'hd : color = 24'h2060C0;
 			4'he : color = 24'h2090E0;
-			4'hf : color = 24'h206000;
-			default : color = 24'h0;
+			4'hf : color = 24'h64a460;
+			default : color = 24'h000000;
 		endcase
 	end
 endmodule

@@ -477,16 +477,16 @@
   <parameter name="resetSynchronousEdges" value="NONE" />
  </module>
  <module name="goertzel_0" kind="goertzel" version="1.0" enabled="1">
-  <parameter name="bin_coeff" value="16777215" />
- </module>
- <module name="goertzel_1" kind="goertzel" version="1.0" enabled="1">
-  <parameter name="bin_coeff" value="16777215" />
- </module>
- <module name="goertzel_2" kind="goertzel" version="1.0" enabled="1">
   <parameter name="bin_coeff" value="16413441" />
  </module>
- <module name="goertzel_3" kind="goertzel" version="1.0" enabled="1">
+ <module name="goertzel_1" kind="goertzel" version="1.0" enabled="1">
   <parameter name="bin_coeff" value="16196631" />
+ </module>
+ <module name="goertzel_2" kind="goertzel" version="1.0" enabled="1">
+  <parameter name="bin_coeff" value="15962430" />
+ </module>
+ <module name="goertzel_3" kind="goertzel" version="1.0" enabled="1">
+  <parameter name="bin_coeff" value="15379322" />
  </module>
  <module
    name="goertzel_split_0"

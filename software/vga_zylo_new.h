@@ -1,5 +1,5 @@
-#ifndef _VGA_ZYLO_H
-#define _VGA_ZYLO_H
+#ifndef _VGA_ZYLO_NEW_H
+#define _VGA_ZYLO_NEW_H
 
 #include <linux/ioctl.h>
 
@@ -223,7 +223,7 @@ int sprite_ids[40] = {
 	33, 		// 9
 
 };
-
+#endif
 
 
 

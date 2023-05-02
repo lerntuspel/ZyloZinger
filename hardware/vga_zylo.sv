@@ -84,7 +84,7 @@ module vga_zylo(
     logic [15:0]        score;
     logic [15:0]        combo;
     logic [31:0]        menu;    // | 1 bit   | 8 bits |   8 bits  |s
-                                // | display | item   | submenu # |
+                                 // | display | item   | submenu # |
     logic [31:0]        gamedata;
     logic               reset_sw;
 
@@ -149,10 +149,10 @@ module vga_zylo(
     logic [3:0] bg_color;
     always_ff @(posedge clk) begin
         if      (vcount == 10'd0)   bg_color <= 4'hb;
-        else if (vcount == 10'd80)  bg_color <= 4'hc;
-        else if (vcount == 10'd190) bg_color <= 4'hd;
-        else if (vcount == 10'd265) bg_color <= 4'he;
-        else if (vcount == 10'd320) bg_color <= 4'hf;
+        else if (vcount == 10'd125)  bg_color <= 4'hc;
+        else if (vcount == 10'd230) bg_color <= 4'hd;
+        else if (vcount == 10'd315) bg_color <= 4'he;
+        else if (vcount == 10'd380) bg_color <= 4'hf;
     end
 
     always_ff @(posedge clk) begin
@@ -169,14 +169,38 @@ module vga_zylo(
             // draw background
             if (vcount[0]) begin     // output buffer_odd, edit buffer_even
                 if ((hcount[10:1] > 640) && (vcount < 10'd480)) begin
-                    for (int i = 0; i < 480; i++)
+                    for (int i = 0; i < 119; i++)
+                        buf_o[i] <= bg_color;
+                    buf_o[119] <= 4'h0;
+                    buf_o[120] <= 4'h0;
+                    for (int i = 121; i < 239; i++)
+                        buf_o[i] <= bg_color;
+                    buf_o[239] <= 4'h0;
+                    buf_o[240] <= 4'h0;
+                    for (int i = 241; i < 359; i++)
+                        buf_o[i] <= bg_color;
+                    buf_o[359] <= 4'h0;
+                    buf_o[360] <= 4'h0;
+                    for (int i = 361; i < 479; i++)
                         buf_o[i] <= bg_color;
                     for (int i = 480; i < 640; i++)
                         buf_o[i] <= 4'h0;
                 end
             end else begin         // output buffer_even, edit buffer_odd 
                 if ((hcount[10:1] > 640) && (vcount < 10'd480)) begin
-                    for (int i = 0; i < 480; i++)
+                    for (int i = 0; i < 119; i++)
+                        buf_e[i] <= bg_color;
+                    buf_e[119] <= 4'h0;
+                    buf_e[120] <= 4'h0;
+                    for (int i = 121; i < 239; i++)
+                        buf_e[i] <= bg_color;
+                    buf_e[239] <= 4'h0;
+                    buf_e[240] <= 4'h0;
+                    for (int i = 241; i < 359; i++)
+                        buf_e[i] <= bg_color;
+                    buf_e[359] <= 4'h0;
+                    buf_e[360] <= 4'h0;
+                    for (int i = 361; i < 479; i++)
                         buf_e[i] <= bg_color;
                     for (int i = 480; i < 640; i++)
                         buf_e[i] <= 4'h0;

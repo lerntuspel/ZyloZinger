@@ -4,7 +4,7 @@
 #include <linux/ioctl.h>
 
 //number of supported sprites
-#define SIZE 64
+#define SIZE 48
 
 typedef struct {
   int data[SIZE];

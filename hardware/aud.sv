@@ -1,8 +1,8 @@
 /*
  * Avalon memory-mapped peripheral that controls audio
- * Top Level Module
+ * Aud Top Level Module
  * 
- * Storage procedure
+ * 
  * Columbia University
  */
 
@@ -142,7 +142,7 @@ module audio_control(
         if (bram_reading)
             buffer = bram_data_out;
         else
-            buffer = adc_out_buffer;
+            buffer = {20'b0, result_buffer};
     end
 
     //Determine when the driver is in the middle of pulling a sample
@@ -201,7 +201,7 @@ module audio_control(
         // this clock cycle writes the previous clock cycles 
         // adc_out_buffer into the current bram_wa
         if (write_clk) begin
-            result_buffer <= result;
+            result_buffer <= {1'b0, overall_result};
             // behavior during write bram procedure
             if (bram_writing && !bram_write) begin
                 // check if limit number of samples has been reached
