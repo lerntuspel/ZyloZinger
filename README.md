@@ -5,4 +5,4 @@ On the hardware side: A microphone feeds analog signal into the onboard audio co
 
 The FPGA we used was a Education Edition De1-SOC Altera Cyclone.
 Programs used to design custom hardware were Intel Platform Designer and Quartus Prime.
-
+VGA display is 640x480. 
