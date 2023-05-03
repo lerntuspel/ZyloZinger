@@ -30,11 +30,14 @@ void updateBall(sprite *obj) {
 	obj->x += obj->dx;
 	obj->y += obj->dy;
 	if (obj->x < 0 || obj->x >= X_MAX) {
-		//obj->dx = -obj->dx;
+		obj->y = 380;
+		obj->x = 700;
+		obj->id = 0;
+		obj->dy = 0;
+		obj->dx = 0;
     }
 	if (obj->y < 0 || obj->y > Y_MAX) {
 		// obj->dy = -obj->dy;
-		obj->y = 481;
 		obj->id = 0;
 		obj->dy = 0;
 	}
@@ -47,54 +50,78 @@ void updateBall(sprite *obj) {
 void scorecombosetup(sprite *sprites) {
 	//index 0 acts strangly
 	//'SCORE'
-	sprites[1].baseid = 17; //S
-	sprites[2].baseid = 12; //C
-	sprites[3].baseid = 15; //O
-	sprites[4].baseid = 16; //R
-	sprites[5].baseid = 13; //E
+	sprites[1].id = 17; //S
+	sprites[2].id = 12; //C
+	sprites[3].id = 15; //O
+	sprites[4].id = 16; //R
+	sprites[5].id = 13; //E
 	for (int i = 1; i < 6; i++) {
 		sprites[i].x = 480+32*(i-1); 
 		sprites[i].y = 40;
 		sprites[i].dx = 0;  
 		sprites[i].dy = 0; 
-		sprites[i].id = sprites[i].baseid;
+		sprites[i].hit = 1;
 		sprites[i].index = i;
 	}
-	sprites[6].baseid = 10; //0
-	sprites[7].baseid = 10; //0
-	sprites[8].baseid = 10; //0
+	sprites[6].id = 10; //0
+	sprites[7].id = 10; //0
+	sprites[8].id = 10; //0
 	for (int i = 6; i < 9; i++) {
 		sprites[i].x = 480+32+32*(i-6); 
 		sprites[i].y = 90;
 		sprites[i].dx = 0;  
 		sprites[i].dy = 0; 
-		sprites[i].id = sprites[i].baseid;
+		sprites[i].hit = 1;
 		sprites[i].index = i;
 	}
 
 	//'COMBO'
-	sprites[9].baseid =  12; //C
-	sprites[10].baseid = 15; //O
-	sprites[11].baseid = 14; //M
-	sprites[12].baseid = 11; //B
-	sprites[13].baseid = 15; //O
+	sprites[9].id =  12; //C
+	sprites[10].id = 15; //O
+	sprites[11].id = 14; //M
+	sprites[12].id = 11; //B
+	sprites[13].id = 15; //O
 	for (int i = 9; i < 14; i++) {
 		sprites[i].x = 480+32*(i-9); 
 		sprites[i].y = 140;
 		sprites[i].dx = 0;  
 		sprites[i].dy = 0; 
-		sprites[i].id = sprites[i].baseid;
+		sprites[i].hit = 1;
 		sprites[i].index = i;
 	}
-	sprites[14].baseid = 10; //0
-	sprites[15].baseid = 10; //0
-	sprites[16].baseid = 10; //0
+	sprites[14].id = 10; //0
+	sprites[15].id = 10; //0
+	sprites[16].id = 10; //0
 	for (int i = 14; i < 17; i++) {
 		sprites[i].x = 480+32+32*(i-14); 
 		sprites[i].y = 190;
 		sprites[i].dx = 0;  
 		sprites[i].dy = 0; 
-		sprites[i].id = sprites[i].baseid;
+		sprites[i].hit = 1;
+		sprites[i].index = i;
+	}
+	
+	//'MAX'
+	sprites[17].id = 14; //M
+	sprites[18].id = 26; //A
+	sprites[19].id = 27; //X
+	for (int i = 17; i < 20; i++) {
+		sprites[i].x = 480+32+32*(i-17); 
+		sprites[i].y = 240;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 0; 
+		sprites[i].hit = 1;
+		sprites[i].index = i;
+	}
+	sprites[20].id = 10; //0
+	sprites[21].id = 10; //0
+	sprites[22].id = 10; //0
+	for (int i = 20; i < 23; i++) {
+		sprites[i].x = 480+32+32*(i-20); 
+		sprites[i].y = 290;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 0; 
+		sprites[i].hit = 1;
 		sprites[i].index = i;
 	}
 }
@@ -124,6 +151,19 @@ void update_score(sprite *sprites, const int score) {
 	sprites[8].id = ones; //1s
 	return;
 }
+
+void update_max(sprite *sprites, const int max) {
+	int huds = (int)max/100;
+	int tens = (int)(max - huds*100)/10;
+	int ones = max - huds*100 - tens*10;
+	if (huds == 0) huds = 10;
+	if (tens == 0) tens = 10;
+	if (ones == 0) ones = 10;
+	sprites[20].id = huds; //100s	
+	sprites[21].id = tens; //10s
+	sprites[22].id = ones; //1s
+	return;
+}
 // dedicate all sprites below 
 
 // spawns a block with sprite.id depending on note
@@ -131,7 +171,7 @@ void spawnnote(sprite* sprites, int note) {
 	//scans sprite array for empty sprite
 	if (note == 0) return;
 	int i, j;
-	for (i = 17; i < SIZE; i++) {
+	for (i = 23; i < SIZE; i++) {
 	    if (sprites[i].id == 0) break;
 	}
 	for (j = i+1; j < SIZE; j++) {
@@ -143,12 +183,14 @@ void spawnnote(sprite* sprites, int note) {
 	sprites[i].dx = 0;  
 	sprites[i].dy = 1; 
 	sprites[i].id = note*2 + 16;
+	sprites[i].hit = 0;
 	sprites[i].index = i;
 	sprites[j].x = 60 + 120*(note-1); 
 	sprites[j].y = 0;
 	sprites[j].dx = 0;  
 	sprites[j].dy = 1; 
 	sprites[j].id = note*2 + 17;
+	sprites[j].hit = 0;
 	sprites[j].index = j;
 	return;
 }
@@ -159,7 +201,7 @@ int check_valid_region(sprite* sprites, int start) {
     int i;
     //int cf = *combo_flag;
     for (i = start; i < SIZE; i++) {
-	    if (sprites[i].y > 380 && sprites[i].y < 481) {
+	    if ((sprites[i].y > 330) && (sprites[i].y < 410) && (sprites[i].id != 0) && (sprites[i].hit == 0)) {
 	        //if (sprites[i].y == 480) cf = 0;
 	        return i;
 	    }
@@ -167,9 +209,23 @@ int check_valid_region(sprite* sprites, int start) {
 	return -1;
 }
 
+void screen_refresh(sprite* sprites) {
+    for (int i = 1; i < SIZE; i++) {
+		sprites[i].x = 630; 
+		sprites[i].y = 470;
+		sprites[i].dx = 0;  
+		sprites[i].dy = 0; 
+		sprites[i].id = 0;
+		sprites[i].hit = 1;
+		sprites[i].index = i;
+	}
+	return;
+}
+
 // simple game of hitting random falling notes when they reach the green zone
 int main()
 {
+    
 	vga_zylo_arg_t vzat;
 
 	aud_arg_t aat;
@@ -192,81 +248,93 @@ int main()
 		fprintf(stderr, "could not open %s\n", filename2);
 		return -1;
 	}
- 	FILE *fp = fopen("test.txt", "w");
-	if (fp == NULL)	return -1;
+ 	//FILE *fp = fopen("test.txt", "w");
+	//if (fp == NULL)	return -1;
 	
 	sprite *sprites = NULL;	
 	sprites = calloc(SIZE, sizeof(*sprites));
+	screen_refresh(sprites);
+	scorecombosetup(sprites);
 	
 	int score = 0;
 	int combo = 0;
-	scorecombosetup(sprites);
-	
 	//packet of sprite data to send
 	vga_zylo_data_t vzdt;
 	
-	// int *combo_flag; 
-	//*combo_flag = 1;
+	int combo_flag = 1; 
 	int counter = 0; 	
 	int gamecounter = 0;
     int validleft, validright;
-    
-	while (gamecounter <= 1000) {
-		if ((counter%10)==0) gamecounter++;
-		
+    int max = 0;
+    int hitcount = 0;
+	int noteCount = 0;  
+	int MAX_NOTE_COUNT = 100;    
+	while (noteCount < MAX_NOTE_COUNT + 5) {
+	   
+		if ((counter%10)==0) {
+		    gamecounter++;
+		    printf("%d\n", gamecounter);
+		}
+
 		if ((counter%132)==0) {
-		    spawnnote(sprites, (rand() % 5));
+		    if(noteCount < MAX_NOTE_COUNT) 
+		    	spawnnote(sprites, (rand() % 5));
+		    noteCount++; 
 		}
 		
-		validleft = check_valid_region(sprites, 17);
+		validleft = check_valid_region(sprites, 23);
 		validright = check_valid_region(sprites, validleft+1);
 		amt.data = get_aud_data(aud_fd);
-		if (amt.data == (1+(sprites[validleft].id-17)>>1)) {
-		    sprites[validleft].y = 481;
-		    sprites[validright].y = 481;
-		    score++;
-		    if (1) combo++;
+		if (sprites[validleft].y == 399) {
+		    combo_flag = 0;
+		    combo = 0;
+	    }
+	    
+		if ((amt.data == (1+(sprites[validleft].id-17)>>1)) && (sprites[validleft].id!=0)) {
+		    hitcount++;
+		    // sprites[validleft].y = 481;
+		    // sprites[validright].y = 481;
+		    if (hitcount == 8) {
+		        hitcount = 0;
+		        sprites[validleft].hit = 1;
+		        sprites[validright].hit = 1;
+		        sprites[validleft].dy = 0;
+		        sprites[validright].dy = 0;
+		        sprites[validleft].dx = 10;
+		        sprites[validright].dx = 10;
+		        
+		        if (combo_flag) {
+		            combo++;
+		            if (combo > max)
+		                max = combo;
+		        }
+		        score = score + 1 + combo/5;
+		    }
  		}
-		update_combo(sprites, 1+(sprites[validleft].id-17)>>1);
+ 	    else 
+ 	        hitcount = 0;
+ 		
+ 		//update_score(sprites, amt.data);
+		//update_combo(sprites, 1+(sprites[validleft].id-17)>>1);
 		update_score(sprites, score);
-			
+		update_combo(sprites, combo);
+		update_max(sprites, max);
+	
 		//package the sprites together
 		for (int i = 0; i < SIZE; i++) {
 			vzdt.data[i] = (sprites[i].index<<26) + (sprites[i].id<<20) + (sprites[i].y<<10) + (sprites[i].x<<0);
 		}
 		//send package to hardware
 		send_sprite_positions(&vzdt, vga_zylo_fd);
-		//update spirtes on software side
+		//update spirtes x and y based on dx and dy on software side
 		for (int i = 0; i < SIZE; i++) {
 			updateBall(&sprites[i]);
 		}
+		combo_flag = 1;
 		//pause to let hardware catch up
 		counter++;
-		usleep(10000);
+		usleep(5000);
 	}
 	free (sprites);
-
-	// amt.size = (int) mem_obj.limit;
-	// amt.mode = (int) mem_obj.mode;
-	// usleep(1200000);
-	// send_mode(&amt);
-	// send_limit(&amt);
-	// usleep(12000000);
-	// int amp = 0;
-	// amt.size = 0;
-	// // send_limit(&amt);
-	// for(int counter = 0; counter < amt.size; counter++) {
-	// 		mem_obj.address = counter;
-	// 		amt.address = mem_obj.address;
-	// 	//printf("%d: ", amt.address);
-	// 		send_address(&amt);	
-	// 		amt.data = get_data();
-	// 		amp = amt.data;
-	// 	//printf("%d\n", amt.data);
-	// 		fprintf(fp, "%08x\n", amp);
-	// }
-	// fclose(fp);
-	
-
 	return 0;
 }

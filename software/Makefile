@@ -25,7 +25,7 @@ module:
 
 clean:
 	${MAKE} -C ${KERNEL_SOURCE} SUBDIRS=${PWD} clean
-	${RM} hello test
+	${RM} hello test test2
 
 TARFILES = Makefile README vga_zylo.h vga_zylo.c aud.c aud.h interfaces.c interfaces.h test.c hello.c 
 TARFILE = lab3-sw.tar.gz

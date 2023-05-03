@@ -243,6 +243,26 @@ module sprites(
         .addr(spr_rom_addr),
         .data(spr_rom_data[6'd25])
     );
+	rom_sync #(//purple
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/A.txt")
+    ) num_26 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd26])
+    );
+	rom_sync #(
+        .WIDTH(4),
+        .WORDS(1024),
+        .INIT_F("./sprites/Sprite_rom/X.txt")
+    ) num_27 (
+	.clk(clk),
+        .addr(spr_rom_addr),
+        .data(spr_rom_data[6'd27])
+    );
+
+
 	always_comb begin
 		case (n_sprite)
 			// numbers
@@ -273,6 +293,10 @@ module sprites(
 			6'd23 : color_code = spr_rom_data[6'd23]; // pink r
 			6'd24 : color_code = spr_rom_data[6'd24]; // purple l
 			6'd25 : color_code = spr_rom_data[6'd25]; // purple r
+			// A/X added later
+			6'd26 : color_code = spr_rom_data[6'd26]; // A
+			6'd27 : color_code = spr_rom_data[6'd27]; // X
+			
 			default : begin
 				color_code <= 4'h0;
 			end

@@ -118,18 +118,18 @@ always @(posedge clk) begin
 
 end
 
-    assign ratio_12 = (power_1/`SHIFT) > power_2;
-    assign ratio_13 = power_1/`SHIFT > power_3;
-    assign ratio_14 = power_1/`SHIFT > power_4;
+    assign ratio_12 = power_1/(`SHIFT<<1) > power_2;
+    assign ratio_13 = power_1/(`SHIFT<<1) > power_3;
+    assign ratio_14 = power_1/(`SHIFT<<1) > power_4;
     assign ratio_21 = power_2/`SHIFT > power_1;
     assign ratio_23 = power_2/`SHIFT > power_3;
     assign ratio_24 = power_2/`SHIFT > power_4;
-    assign ratio_31 = power_3/`SHIFT > power_1;
-    assign ratio_32 = power_3 /`SHIFT > power_2;
-    assign ratio_34 = power_3 /`SHIFT > power_4;
-    assign ratio_41 = power_4 /`SHIFT > power_1;
-    assign ratio_42 = power_4 /`SHIFT > power_2;
-    assign ratio_43 = power_4 /`SHIFT > power_3;
+    assign ratio_31 = power_3/(`SHIFT>>1) > power_1;
+    assign ratio_32 = power_3/(`SHIFT>>1) > power_2;
+    assign ratio_34 = power_3/(`SHIFT>>1) > power_4;
+    assign ratio_41 = power_4/`SHIFT > power_1;
+    assign ratio_42 = power_4/`SHIFT > power_2;
+    assign ratio_43 = power_4/`SHIFT > power_3;
 
     assign overall_count = pw1_count + pw2_count + pw3_count + pw4_count + silence_count;
 

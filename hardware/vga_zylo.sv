@@ -1,7 +1,7 @@
 /*
  * Avalon memory-mapped peripheral that generates VGA 
  * Sprite generation method heavily inspired from touhou project from spring 2022 by Xinye Jiang and Po-Cheng Liu.
- * lightly modified by Alex you to 
+ * Modified by Alex Yu to handle bram rom sprites and thus reducing memory usage from loading very many sprites. 
  * Alex Yu
  * Columbia University
  */
@@ -149,10 +149,10 @@ module vga_zylo(
     logic [3:0] bg_color;
     always_ff @(posedge clk) begin
         if      (vcount == 10'd0)   bg_color <= 4'hb;
-        else if (vcount == 10'd125)  bg_color <= 4'hc;
-        else if (vcount == 10'd230) bg_color <= 4'hd;
-        else if (vcount == 10'd315) bg_color <= 4'he;
-        else if (vcount == 10'd380) bg_color <= 4'hf;
+        else if (vcount == 10'd130) bg_color <= 4'hc;
+        else if (vcount == 10'd240) bg_color <= 4'hd;
+        else if (vcount == 10'd330) bg_color <= 4'hf;
+        else if (vcount == 10'd400) bg_color <= 4'he;
     end
 
     always_ff @(posedge clk) begin
@@ -281,7 +281,7 @@ module vga_zylo(
     always_comb begin
         {VGA_R, VGA_G, VGA_B} = 24'h0;
         if (VGA_BLANK_n) begin
-            if (vcount < 10'd480) {VGA_R, VGA_G, VGA_B} = color_out;
+            if (vcount > 10'd1 && vcount < 10'd480) {VGA_R, VGA_G, VGA_B} = color_out;
         end
     end
 
