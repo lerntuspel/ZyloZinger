@@ -1,3 +1,10 @@
+/*
+ * Detects which of the powers recieved from the Goertzel modules is the strongest and sends that result
+ * Uses a moving window to sample the results and returns a value if the result is the same for a specified number of times in the window
+ * Sienna Brent, Rajat Tyagi, Alex Yu
+ * Columbia University
+ */
+
 //takes in 4 power inputs and outputs either "silence" or one of the 4 bins
 `define INTERVAL 15
 `define INTERVAL_WIDTH 5

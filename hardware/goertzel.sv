@@ -1,3 +1,9 @@
+/*
+ * Goertzel Module returns a power value indicating the strength of the specified frequecny detected
+ * Sienna Brent, Rajat Tyagi, Alex Yu
+ * Columbia University
+ */
+ 
 `define FFT_WIDTH 10 //2^10 = 1024 point FFT
 `define FFT_MAG 1024
 `define NORMALIZE 8388608 //2^23, dependent on width of incoming signal

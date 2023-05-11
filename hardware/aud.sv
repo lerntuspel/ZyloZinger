@@ -1,8 +1,9 @@
 /*
- * Avalon memory-mapped peripheral that controls audio
- * Aud Top Level Module
- * 
- * 
+ * Avalon memory-mapped peripheral that handles audio inputs
+ * Utilizes a audio driver that handles Altera driver files.
+ * Functions to both store 1.5 seconds of 48khz audio data into BRAM for the Avalon bus to read out
+ * Also can send to software the readout the result of the detector moudule.
+ * Alex Yu, Sienna Brent, Rajat Tyagi, Riona westphal
  * Columbia University
  */
 

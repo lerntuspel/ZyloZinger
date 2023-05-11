@@ -1,8 +1,8 @@
 /*
  * Avalon memory-mapped peripheral that generates VGA 
  * Sprite generation method heavily inspired from touhou project from spring 2022 by Xinye Jiang and Po-Cheng Liu.
- * Modified by Alex Yu to handle bram rom sprites and thus reducing memory usage from loading very many sprites. 
- * Alex Yu
+ * Modified to handle bram rom sprites and thus reducing memory usage from loading very many sprites. 
+ * Alex Yu, Riona Westphal
  * Columbia University
  */
 
@@ -138,7 +138,7 @@ module vga_zylo(
     // logic [9:0] x, y;
     logic [639:0][3:0] buf_e;
     logic [639:0][3:0] buf_o;
-    logic [3:0] stage;
+    logic [3:0] state;
     logic [8:0] sprite_index;
     logic [5:0] pixel;
     logic [9:0] xposition;
@@ -159,7 +159,7 @@ module vga_zylo(
         if(reset) begin
             buf_e <= {640{4'hb}}; // some red
             buf_o <= {640{4'hb}}; // some red
-            stage <= 0;
+            state <= 0;
             sprite_index <= 0;
             pixel <= 0;
             done <= 1;
@@ -209,34 +209,27 @@ module vga_zylo(
 
             if (hcount == 11'd1) begin
                 done <= 0;  // 0/1
-                stage <= 0; // 0-2
+                state <= 4'd0; // 0-2
                 sprite_index <= 0; // 0-127
                 pixel <= 0; // 0-31
             end
             if(~done)begin
-                case(stage)
+                case(state)
                     4'd0 : begin
-                        // n <= sprites_n[sprites_read_address];
-                        // x <= sprites_x[sprites_read_address];
-                        // y <= sprites_y[sprites_read_address];
                         // n, x, y ready next clk cycle
                         pixel <= 0;
-                        // if (vcount >= 10'd479) // if vcount is off the screen -> new screen
-                        //     line <= 10'd32;		// end early
-                        // else
-                        //     line <= vcount - sprites_y[sprite_index];
-                        stage <= stage + 4'd1;
+                        state <= 4'd1;
                     end
                     4'd1 : begin
                         if ((n == 0) || (line >= 32)) begin // not in this line orr empty sprite
                             pixel <= 6'd0;
-                            stage <= 4'd0;
+                            state <= 4'd0;
                             if (sprite_index < 9'd63) 	// check if there are more sprites to check (existance of 32 potential sprites)
                                 sprite_index <= sprite_index + 8'd1;
                             else
                                 done <= 1;
                         end else begin
-                            stage <= stage + 4'd1;
+                            state <= 4'd2;
                         end
                     end
                     4'd2 : begin
@@ -251,13 +244,13 @@ module vga_zylo(
                                     buf_o[xposition] <= pattern;
                             end
                         end
-							// repeat writing stage pixel is 0-30 or under
+							// repeat writing state pixel is 0-30 or under
                         if (pixel < 6'd31) begin
                             pixel <= pixel + 1;
-                            stage <= stage;
+                            state <= state;
                         end else begin 			// on pixel == 31 (32 pixel)
                             pixel <= 6'd0;
-                            stage <= 4'd0;
+                            state <= 4'd0;
                             if (sprite_index < 9'd63) 	// repeat on sprite number 0-62
                                 sprite_index <= sprite_index + 8'd1;
                             else                      	// stop on 63

@@ -1,6 +1,7 @@
 /*
  * twoport Bram module from http://www.cs.columbia.edu/~sedwards/classes/2023/4840-spring/memory.pdf
- * lightly modified by Alex Yu
+ * default parameters lightly modified by Alex Yu
+ * Columbia University
  */
  
  module twoportbram

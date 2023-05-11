@@ -1,4 +1,10 @@
-module sprites(
+/*
+ * Sprite ROM seletor and color decoders as well as syncronous ROM module
+ * Alex Yu
+ * Columbia University
+ */
+ 
+ module sprites(
 	input logic [5:0]          	n_sprite,
 	input logic [9:0]          	line,
 	input logic [5:0]			pixel,
