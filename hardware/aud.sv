@@ -120,25 +120,15 @@ module audio_control(
     //Convert stereo input to mono        
     logic [23:0]    audioInMono;
     logic [15:0]    counter = 16'd0;
-    wire [23:0]     buffer;
+    wire  [23:0]     buffer;
     
     logic [3:0]     bram_input_ctrl;
     logic [3:0]     result_buffer;
     logic           write_clk;
 
-    always @ (*) begin
+    always_comb begin
         audioInMono = (adc_right_out>>1) + (adc_left_out>>1);
-        // buffer changes based on ram on or off
-        case (bram_input_ctrl) 
-            4'd0 : begin
-                bram_data_in = adc_out_buffer;
-                write_clk = advance;
-            end
-            4'd1 : begin
-                bram_data_in = {20'b0, result_buffer};   
-                write_clk = flag;
-            end  
-        endcase
+        bram_data_in = adc_out_buffer;
         if (bram_reading)
             buffer = bram_data_out;
         else
@@ -146,12 +136,13 @@ module audio_control(
     end
 
     //Determine when the driver is in the middle of pulling a sample
+    //by default dont use the BRAM module
     logic           bram_writing = 0;
     logic           bram_reading = 0;
     logic [31:0]    driverReading = 31'd0;
     logic [15:0]    limit;
     // logic [23:0]    adc_out_buffer;
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin : IOcalls
         // iowrite recieved
         if (chipselect && write) begin
             case (address)
@@ -163,7 +154,8 @@ module audio_control(
                     if (!bram_writing) begin
                         limit <= writedata[15:0];
                         bram_writing <= 1;
-                        if (writedata[15:0] == 16'h0000)                            
+                        // if the write limti sent by software is 0, then dont read from bram otherwise, do read from bram
+                        if (writedata[15:0] == 16'h0000)                        
                             bram_reading <= 0;
                         else 
                             bram_reading <= 1;
@@ -200,7 +192,7 @@ module audio_control(
         if (bram_write) bram_write <= 0;
         // this clock cycle writes the previous clock cycles 
         // adc_out_buffer into the current bram_wa
-        if (write_clk) begin
+        if (advance) begin
             result_buffer <= {1'b0, overall_result};
             // behavior during write bram procedure
             if (bram_writing && !bram_write) begin
@@ -233,25 +225,3 @@ module audio_control(
     //Sample inputs/Audio passthrough
 
 endmodule
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

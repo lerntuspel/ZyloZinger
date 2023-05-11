@@ -118,9 +118,9 @@ always @(posedge clk) begin
 
 end
 
-    assign ratio_12 = power_1/(`SHIFT<<1) > power_2;
-    assign ratio_13 = power_1/(`SHIFT<<1) > power_3;
-    assign ratio_14 = power_1/(`SHIFT<<1) > power_4;
+    assign ratio_12 = power_1/(`SHIFT) > power_2;
+    assign ratio_13 = power_1/(`SHIFT) > power_3;
+    assign ratio_14 = power_1/(`SHIFT) > power_4;
     assign ratio_21 = power_2/`SHIFT > power_1;
     assign ratio_23 = power_2/`SHIFT > power_3;
     assign ratio_24 = power_2/`SHIFT > power_4;
