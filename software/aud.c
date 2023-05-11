@@ -1,8 +1,8 @@
-/* * Device driver for the VGA video generator
+/* * Device driver for the audio recognition hardware
  *
  * A Platform device implemented using the misc subsystem
  *
- * Stephen A. Edwards
+ * Alex Yu, Stephen A. Edwards
  * Columbia University
  *
  * References:
