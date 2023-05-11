@@ -1,8 +1,8 @@
 /* * Device driver for the VGA video generator
  *
  * A Platform device implemented using the misc subsystem
- *
- * Alex Yu
+ * 
+ * Alex Yu, Stephen A. Edwards
  * Columbia University
  *
  * References:
