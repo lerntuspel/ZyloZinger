@@ -1,9 +1,9 @@
 /*
- * Userspace program that communicates with the aud and vga_vylo device driver
+ * Userspace program that communicates with the aud and vga_zylo device driver
  * through ioctls
- * current amplitude will be represented as the y position of the ball from vga_vylo
- * reads audio and then sends amplituded
- * ayu2126
+ * radomly generates notes at top of screen at fixed intervals
+ * reads from hardware the detected note and checks if it matches the note currently in the green zone
+ * Alex Yu, Rajat Tyagi, Sienna Brent, Riona Westphal
  * Columbia University
  */
 
